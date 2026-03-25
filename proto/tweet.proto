@@ -1,0 +1,118 @@
+syntax = "proto3";
+package tweet;
+
+service TweetService {
+  rpc CreateTweet (CreateTweetRequest) returns (CreateTweetResponse);
+  rpc GetTweet (GetTweetRequest) returns (GetTweetResponse);
+  rpc DeleteTweet (DeleteTweetRequest) returns (DeleteTweetResponse);
+  rpc ListTweets (ListTweetsRequest) returns (ListTweetsResponse);
+  rpc GetUserTweets (GetUserTweetsRequest) returns (GetUserTweetsResponse);
+  rpc LikeTweet (LikeTweetRequest) returns (LikeTweetResponse);
+  rpc UnlikeTweet (UnlikeTweetRequest) returns (UnlikeTweetResponse);
+  rpc GetTimeline (GetTimelineRequest) returns (GetTimelineResponse);
+  rpc Check (HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message Tweet {
+  string tweet_id = 1;
+  string user_id = 2;
+  string username = 3;
+  string content = 4;
+  int32 likes_count = 5;
+  int32 retweets_count = 6;
+  string created_at = 7;
+  bool is_liked = 8;
+}
+
+message CreateTweetRequest {
+  string user_id = 1;
+  string content = 2;
+}
+
+message CreateTweetResponse {
+  bool success = 1;
+  string message = 2;
+  Tweet tweet = 3;
+}
+
+message GetTweetRequest {
+  string tweet_id = 1;
+}
+
+message GetTweetResponse {
+  bool success = 1;
+  string message = 2;
+  Tweet tweet = 3;
+}
+
+message DeleteTweetRequest {
+  string tweet_id = 1;
+  string user_id = 2;
+}
+
+message DeleteTweetResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListTweetsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListTweetsResponse {
+  bool success = 1;
+  repeated Tweet tweets = 2;
+  int32 total = 3;
+}
+
+message GetUserTweetsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetUserTweetsResponse {
+  bool success = 1;
+  repeated Tweet tweets = 2;
+  int32 total = 3;
+}
+
+message LikeTweetRequest {
+  string tweet_id = 1;
+  string user_id = 2;
+}
+
+message LikeTweetResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message UnlikeTweetRequest {
+  string tweet_id = 1;
+  string user_id = 2;
+}
+
+message UnlikeTweetResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetTimelineRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetTimelineResponse {
+  bool success = 1;
+  repeated Tweet tweets = 2;
+}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  string status = 1;
+}

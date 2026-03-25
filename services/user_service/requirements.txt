@@ -1,0 +1,4 @@
+grpcio>=1.60.0
+grpcio-tools>=1.60.0
+PyJWT>=2.8.0
+passlib[bcrypt]>=1.7.4
