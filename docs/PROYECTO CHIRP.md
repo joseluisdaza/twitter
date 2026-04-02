@@ -1,56 +1,70 @@
 # PROYECTO CHIRP - Diseño Técnico
-
-**ESTADO DEL DOCUMENTO:** REVISADO
-
-*Es posible que no todas las secciones apliquen a todos los proyectos; simplemente elimine las secciones que no apliquen. Los equipos son libres de determinar el nivel de detalle a incluir en sus diseños, por ejemplo, solo el enfoque de alto nivel o componentes detallados de bajo nivel, diagramas de clases y algoritmos. Proporcionar un documento de diseño claro y exhaustivo garantizará que reciba la mejor retroalimentación más útil de sus revisores. Esta plantilla está destinada a proporcionarle un punto de partida, un esquema y ejemplos de artefactos de diseño que puede elegir incluir.*
-
-1. Copie esta plantilla en la carpeta apropiada para los proyectos de su equipo.
-2. Reemplace "Plantilla de Documento de Diseño Técnico" con "Nombre de Su Proyecto - Diseño Técnico".
-3. Complete los detalles de su diseño.
-4. Agregue un enlace a su documento en la página wiki de su equipo.
-5. Establezca el estado del documento en **EN REVISIÓN** y realice una revisión interna (con su equipo) y una revisión externa con todos sus interesados.
-6. Capture las decisiones que se tomaron y por qué en el documento.
-7. Capture las actas de las reuniones de revisión con cualquier elemento de acción en la sección de Actas de Revisión, y envíe esas actas a sus revisores.
-8. Una vez que su documento haya sido revisado y haya atendido todos los comentarios y preguntas de los revisores, cambie el estado del documento a **REVISADO**, y luego muévalo al Wiki para que sea buscable por otros equipos.
-   a. Exporte el contenido del documento a un archivo y cópielo y péguelo en una página Wiki, para que su proyecto sea buscable.
-9. Incluya el enlace de la página Wiki de su proyecto en la página Wiki de su equipo (donde mantiene los enlaces de documentos para todos los proyectos del equipo). Esto facilitará encontrar su documento.
-10. Actualice el documento wiki si alguna decisión importante cambia durante el transcurso de la implementación de su proyecto.
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
----
-
+**ESTADO DEL DOCUMENTO:** EN REVISION
 ## Resumen
 Chirp es una plataforma de microblogging social en tiempo real (similar a X/Twitter). Permite a los usuarios crear chirps (mensajes de máximo 280 caracteres), seguir a otros usuarios, ver un timeline personalizado, dar like y comentar. El objetivo es ofrecer una experiencia de engagement instantáneo con alta disponibilidad y escalabilidad en la nube.
-
-
 ## Supuestos
-
 - Todos los usuarios tienen acceso a internet y un navegador moderno.
 - El sistema se desplegará en AWS (o equivalente cloud).
 - Se utilizará un proveedor de identidad externo para OIDC/SSO.
 
-
 ## Alcance y Fases
-
 Fase 1 (esta entrega):** CRUD de usuarios, chirps, follows, likes y comentarios + AuthN/AuthZ completa.
-
-Fuera del alcance (Fase 2/3): Notificaciones push, búsqueda avanzada con Elasticsearch, trending topics, moderación IA, monetización.
+Fuera del alcance (Fase 2/3): Notificaciones push, búsqueda avanzada con Elasticsearch, trending topics.
 
 ## 1. Requerimientos *(~5 minutos)*
 
 ### 1.1 Requerimientos Funcionales
 
-1. Los usuarios autenticados deben poder crear y publicar un chirp (Equivalente a un Twit)
-2. Los usuarios autenticados deben poder interactuar con los chirps publicando likes.
-3. Los usuarios autenticados deben poder seguir y dejar de seguir a otros usuarios.
+RF1: Creación de Publicaciones (Prioridad Alta)
+Descripción del requerimiento: El núcleo de escritura del sistema. Permite la inserción de nuevos registros de texto corto en la base de datos, reflejándose inmediatamente en el perfil del autor.
+Historia de Usuario (HU-01):
+Actor: Como usuario autenticado...
+Objetivo: ...quiero crear y publicar un chirp de hasta 280 caracteres...
+Razón: ...para compartir mis ideas y actualizaciones al instante con mi audiencia.
+Criterios de Aceptación:
+Los usuarios deben poder ingresar texto en un área de captura.
+El sistema debe mostrar un indicador visual que bloquee la publicación si el texto excede los 280 caracteres.
+El sistema debe guardar la publicación relacionándola con el usuario y mostrarla de inmediato tras presionar el botón "Publicar".
+
+RF2: Generación del Timeline (Prioridad Alta)
+Descripción del requerimiento: El motor de lectura principal. Requiere recolectar y ordenar las publicaciones basándose en el grafo de seguidores del usuario activo para construir su feed principal.
+Historia de Usuario (HU-02):
+Actor: Como usuario de la plataforma...
+Objetivo: ...quiero visualizar un timeline personalizado ordenado cronológicamente...
+Razón: ...para mantenerme actualizado de forma centralizada con las publicaciones de las cuentas que sigo.
+Criterios de Aceptación:
+Los usuarios deben poder acceder a una pantalla principal inmediatamente después de iniciar sesión.
+El sistema debe mostrar un flujo continuo de chirps provenientes únicamente de los perfiles a los que el usuario ha dado "Follow".
+Los usuarios deben poder hacer scroll hacia abajo para cargar publicaciones más antiguas mediante paginación o scroll infinito sin bloquear la interfaz.
+
+RF3: Interacción Social - Likes (Prioridad Media)
+Descripción del requerimiento: Sistema de validación positiva. Registra la interacción única entre un usuario y una publicación, actualizando contadores de forma transaccional.
+Historia de Usuario (HU-03):
+Actor: Como usuario activo...
+Objetivo: ...quiero dar o quitar "Like" a los chirps de la comunidad...
+Razón: ...para mostrar aprecio por el contenido de otros y participar en la red.
+Criterios de Aceptación:
+Los usuarios deben poder hacer clic en un icono de corazón ("Like") para sumar una unidad al contador público de esa publicación.
+El sistema debe validar en la base de datos que un usuario no pueda registrar más de un Like en el mismo chirp.
+Los usuarios deben poder revertir su "Like" haciendo clic nuevamente (toggle) para disminuir el contador.
 
 ### 1.2 Requerimientos No Funcionales
 
-1. El sistema debe ser altamente disponible en un entorno de desarrollo/local, priorizando disponibilidad sobre consistencia fuerte (Teorema CAP: AP), utilizando una base de datos que soporte escalado horizontal
-2. El sistema debe soportar al menos 100 usuarios concurrentes simulados y 500 chirps por minuto en pruebas de carga básicas, sin degradación perceptible en la experiencia del usuario.
-3. El sistema debe garantizar durabilidad de los datos mediante el uso de almacenamiento persistente.
-4. El sistema debe implementar autenticación y autorización segura mediante OIDC/SSO con JWT
+RNF 1: Latencia (Dimensión: Latencia)
+Requerimiento: El sistema backend debe generar y entregar la respuesta de lectura del Timeline principal en un tiempo < 400 ms en el percentil 95 (p95) bajo condiciones de tráfico normal.
+Contextualización: Para lograr esto sin arquitecturas excesivamente complejas en la fase inicial, se implementará paginación basada en cursores (cargando lotes de 20 chirps) y se evitarán consultas anidadas profundas en la base de datos al momento de cargar el feed.
+
+RNF 2: Escalabilidad de la Infraestructura (Dimensión: Escalabilidad)
+Requerimiento: La arquitectura contenerizada debe ser capaz de soportar una base de 10,000 Usuarios Activos Diarios (DAU) y manejar picos de concurrencia de hasta 100 Peticiones Por Segundo (QPS) sin degradación del servicio.
+Contextualización: Se asume una proporción de operaciones de lectura/escritura de 10:1. Para cumplir con esto de forma realista, se desplegarán múltiples instancias del contenedor de la API (Node.js/Express) balanceadas, separando las cargas de trabajo de la base de datos relacional y documental.
+
+RNF 3: Disponibilidad y Teorema CAP (Dimensión: CAP / Tolerancia a fallos)
+Requerimiento: El sistema debe garantizar un 99.9% de uptime mensual (permitiendo un máximo de ~43 minutos de inactividad al mes) para las funciones críticas: leer el timeline y publicar chirps.
+Contextualización: El sistema priorizará la Disponibilidad (A) sobre la Consistencia fuerte (C) del Teorema CAP. Si hay alta carga o falla un proceso asíncrono, se acepta una consistencia eventual donde los contadores secundarios (cantidad total de likes o respuestas) puedan tardar hasta 5 segundos en reflejarse correctamente en todos los clientes.
+
+RNF 4: Restricciones de Seguridad (Dimensión: Seguridad)
+Requerimiento: Las APIs públicas del sistema deben aplicar políticas de Rate Limiting que bloqueen las peticiones de escritura si un usuario supera el límite de 30 chirps creados por hora. Además, el 100% de los datos de entrada de texto deben ser sanitizados.
+Contextualización: Esto previene ataques de denegación de servicio (DDoS) a nivel de aplicación, controla el spam automatizado (bots) y asegura que no exista inyección de código malicioso (XSS) que afecte el renderizado en el frontend.
 
 ### 1.3 Estimación de Capacidad
 
@@ -225,19 +239,48 @@ sequenceDiagram
 
 ## 5. Diseño de Alto Nivel *(~10-15 minutos)*
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+```mermaid
+graph TD
+    %% Definición de Componentes
+    Client["📱 Cliente Web (React.js)"]
+    API["⚙️ Backend API (Node.js / Express en Docker)"]
+    DB[("🗄️ Base de Datos Principal (PostgreSQL)")]
+    S3[("☁️ Almacenamiento de Objetos (AWS S3)")]
+    CDN["🌍 CDN (CloudFront)"]
 
-*Ahora que tiene una comprensión clara de los requisitos, entidades y API de su sistema, puede comenzar a diseñar la arquitectura de alto nivel. Consiste en dibujar cajas y flechas que representen los diferentes componentes del sistema y cómo interactúan.*
+    %% Interacciones Generales
+    Client -- "1. Peticiones REST (JSON + JWT)" --> API
+    API -- "2. Consultas y Transacciones (SQL)" --> DB
+    Client -- "3. Visualización de Imágenes" --> CDN
+    CDN -- "Caché de multimedia" --> S3
+    API -- "4. Generación de URLs Prefirmadas" --> S3
 
-*Su objetivo principal es diseñar una arquitectura que satisfaga la API que ha diseñado y, por lo tanto, los requisitos identificados. Puede ir uno por uno a través de sus endpoints de API y construir su diseño secuencialmente para satisfacer cada uno.*
-
-*Manténgase enfocado. Es muy común comenzar a agregar complejidad demasiado pronto. Concéntrese en un diseño relativamente simple que cumpla los requisitos funcionales principales, y luego añada complejidad para satisfacer los requisitos no funcionales en la sección de Inmersiones Profundas.*
-
-*Documente las entidades relevantes (columnas/campos) directamente junto al componente de persistencia en el diagrama. Enfóquese en los campos específicos relevantes para su diseño, no en los obvios.*
-
-*¿Los componentes se ejecutarán en infraestructura existente? ¿O aprovisionará nueva infraestructura? ¿Configurará nuevas canalizaciones de despliegue, o usará las existentes?*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
+    %% Entidades Relevantes en BD (Anotaciones)
+    classDef note fill:#f9f9f9,stroke:#333,stroke-width:1px;
+    
+    %% Nota de Base de datos
+    NoteDB["Entidades Clave:<br/>- Users: id, username<br/>- Chirps: id, userId, createdAt<br/>- Follows: followerId, followedId"]
+    NoteDB -.-> DB
+    class NoteDB note
+```
+#### Flujo de Datos por Endpoint (Satisfaciendo los Requerimientos)
+La arquitectura dibujada arriba resuelve nuestros tres requerimientos funcionales principales de la siguiente manera:
+Flujo para Crear un Chirp (POST /api/chirps):
+El Cliente Web envía el texto del chirp y el token de autenticación (JWT) al Backend API.
+La API valida la identidad del usuario y guarda el contenido en la tabla Chirps de la Base de Datos (PostgreSQL).
+Si el usuario incluye una imagen: La API solicita una URL prefirmada a AWS S3 y se la devuelve al cliente. El cliente sube la imagen directamente a S3, y la URL final se asocia al chirp en la base de datos.
+Flujo para Generar el Timeline (GET /api/timeline):
+El Cliente Web solicita su feed principal.
+La API ejecuta una consulta en la Base de Datos, uniendo (JOIN) la tabla Follows (para saber a quién sigue el usuario) con la tabla Chirps, filtrando por los más recientes y aplicando paginación.
+Si los chirps incluyen imágenes, el cliente las descarga rápidamente a través de la CDN, reduciendo la carga en nuestro servidor principal.
+Flujo para Dar Like (POST /api/chirps/:id/like):
+El Cliente Web envía la petición al hacer clic en el botón.
+La API inserta un registro en la tabla pivote Likes dentro de la Base de Datos (vinculando el userId y el chirpId) y actualiza el contador.
+#### Entorno de Ejecución e Infraestructura
+Para garantizar que el sistema cumpla con las métricas de rendimiento y escalabilidad (10,000 DAU y 100 QPS) sin sobrecomplicar la operación inicial, la infraestructura se gestionará de la siguiente manera:
+Aprovisionamiento y Despliegue: Se aprovisionará infraestructura nueva en la nube (AWS). El Backend API no se ejecutará en servidores tradicionales, sino que estará contenerizado usando Docker. Esto permitirá levantar múltiples instancias de la aplicación de forma idéntica y predecible.
+Base de Datos: Se utilizará un servicio gestionado para la base de datos relacional (como Amazon RDS para PostgreSQL), delegando la responsabilidad de los respaldos automatizados, la seguridad en reposo y el mantenimiento del hardware al proveedor de la nube.
+Canalizaciones (CI/CD): Se implementarán nuevas canalizaciones de integración y entrega continua utilizando GitHub Actions. Al integrar nuevo código a la rama principal, el flujo ejecutará las pruebas automatizadas, construirá la nueva imagen de Docker y la desplegará en el entorno de producción, garantizando actualizaciones ágiles y con mínima intervención manual.
 
 ### Componentes
 
@@ -259,10 +302,57 @@ Ejemplo (PlantUML):
 Fuente del Diagrama
 
 ```mermaid
-flowchart TD
-    A[ComponenteA] -->|actualizar| B[ComponenteB]
-    B -->|guardar| C[ComponenteC]
-    C -->|actualizar / confirmar| D[(Base de Datos)]
+graph TD
+    %% Convención: Flujo de Llamadas (Llamador -> Llamado)
+
+    subgraph "Frontend (Cliente React)"
+        UI[Componentes UI]
+        API_Client[Cliente HTTP Axios]
+        UI -->|Invoca acción| API_Client
+    end
+
+    subgraph "Backend API (Node.js / Express)"
+        Router[Express Router / API Gateway]
+        AuthMid[Auth Middleware]
+
+        %% Capa de Controladores (Manejo de HTTP)
+        ChirpCtrl[Chirp Controller]
+        TimelineCtrl[Timeline Controller]
+        SocialCtrl[Social Controller]
+
+        %% Capa de Servicios (Lógica de Negocio)
+        AuthService[Auth Service]
+        ChirpService[Chirp Service]
+        TimelineService[Timeline Service]
+        SocialService[Social Service]
+
+        %% Flujo de peticiones entrantes
+        API_Client -->|Petición REST| Router
+        Router -->|Valida JWT| AuthMid
+        AuthMid -->|Si es válido, continúa| Router
+        
+        Router -->|Llama ruta /chirps| ChirpCtrl
+        Router -->|Llama ruta /timeline| TimelineCtrl
+        Router -->|Llama rutas /follows, /likes| SocialCtrl
+
+        %% Controladores llaman a Servicios
+        ChirpCtrl -->|Pasa payload| ChirpService
+        TimelineCtrl -->|Pide feed| TimelineService
+        SocialCtrl -->|Pasa IDs| SocialService
+    end
+
+    subgraph "Capa de Persistencia y Externos"
+        DB[(PostgreSQL)]
+        S3[(AWS S3)]
+        OIDC[Proveedor Identidad]
+    end
+
+    %% Servicios llaman a Persistencia
+    AuthService -->|Verifica credenciales| OIDC
+    ChirpService -->|Inserta registro| DB
+    ChirpService -->|Solicita firma| S3
+    TimelineService -->|Consulta JOINs| DB
+    SocialService -->|Actualiza pivotes| DB
 ```
 
 ### Temporización
