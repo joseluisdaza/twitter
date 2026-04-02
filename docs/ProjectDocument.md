@@ -34,13 +34,10 @@ El resumen de su proyecto va aquí...
 
 ## Supuestos
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+- Todos los usuarios tienen acceso a internet y un navegador moderno.
+- El sistema se desplegará en AWS (o equivalente cloud).
+- Se utilizará un proveedor de identidad externo para OIDC/SSO.
 
-*Instrucciones:*
-
-*Describa cualquier condición previa que se asume como verdadera y que es fundamental para el diseño de su sistema.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
 
 ## Alcance y Fases
 
