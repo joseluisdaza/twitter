@@ -21,16 +21,8 @@
 ---
 
 ## Resumen
+Chirp es una plataforma de microblogging social en tiempo real (similar a X/Twitter). Permite a los usuarios crear chirps (mensajes de máximo 280 caracteres), seguir a otros usuarios, ver un timeline personalizado, dar like y comentar. El objetivo es ofrecer una experiencia de engagement instantáneo con alta disponibilidad y escalabilidad en la nube.
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Instrucciones:*
-
-*En esta sección, proporcione una breve explicación del proyecto. Esto proporcionará a sus lectores el contexto para el resto de su documento. Debe incluir una descripción de quiénes son sus clientes y cómo los está ayudando. Si la subsección de Antecedentes tiene más de uno o dos párrafos, muévala al Apéndice A. Es posible que desee incluir un diagrama de arquitectura de los sistemas existentes como parte de los Antecedentes.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-El resumen de su proyecto va aquí...
 
 ## Supuestos
 
