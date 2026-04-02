@@ -183,8 +183,8 @@ erDiagram
     USER ||--o| CHIRP : publica
     CHIRP ||--o| COMMENT : recibe
     CHIRP ||--o| LIKE : recibe like
-    USER ||--o| FOLLOW : sigue / es seguido
-    USER ||--o| LIKE : da like
+    USER ||--o| FOLLOW : sigue_es_siguido
+    USER ||--o| LIKE : da_like
 ```
 ---
 
