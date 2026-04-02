@@ -141,10 +141,51 @@ A continuación se detalla cada entidad con sus campos principales relevantes pa
 
 
 
-- ...
-- ...
-- ...
+# Diagrama ER (Estructura de la base de datos)
 
+Este es un diagrama ER que muestra la estructura de la base de datos para una aplicación de redes sociales:
+
+```mermaid
+erDiagram
+    USER {
+        UUID userId PK
+        String username "unique"
+        String email
+        String bio
+        String avatarUrl
+        Timestamp createdAt
+    }
+    CHIRP {
+        UUID chirpId PK
+        UUID userId FK
+        String content
+        String mediaUrls
+        Integer likesCount
+        Timestamp createdAt
+    }
+    COMMENT {
+        UUID commentId PK
+        UUID chirpId FK
+        UUID userId FK
+        String content
+        Timestamp createdAt
+    }
+    FOLLOW {
+        UUID followerId FK
+        UUID followedId FK
+        Timestamp createdAt
+    }
+    LIKE {
+        UUID userId FK
+        UUID chirpId FK
+    }
+
+    USER ||--o| CHIRP : publica
+    CHIRP ||--o| COMMENT : recibe
+    CHIRP ||--o| LIKE : recibe like
+    USER ||--o| FOLLOW : sigue / es seguido
+    USER ||--o| LIKE : da like
+```
 ---
 
 ## 3. API o Interfaz del Sistema *(~5 minutos)*
