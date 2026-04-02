@@ -80,24 +80,66 @@ Fuera del alcance (Fase 2/3): Notificaciones push, búsqueda avanzada con Elasti
 
 ## 2. Entidades Principales *(~2 minutos)*
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+Las entidades principales representan los recursos centrales que el sistema debe gestionar, persistir y exponer a través de la API. Estas entidades se derivan directamente de los requisitos funcionales y forman la base del modelo de datos y del diseño de la API REST con Smithy.
+Entidades Principales Identificadas:
 
-*Identifique y enumere las entidades principales de su sistema. Esto le ayuda a definir términos, comprender los datos centrales de su diseño y establece una base sobre la cual construir. Estas son las entidades que su API intercambiará y que su sistema persistirá en un modelo de datos.*
+User – Representa a los usuarios de la plataforma.
+Chirp – Representa las publicaciones (equivalente a un tweet o post).
+Follow – Representa la relación de seguimiento entre usuarios.
+Like – Representa la interacción de “me gusta” en un chirp.
+Comment – Representa los comentarios realizados en un chirp.
 
-*Empiece con una lista pequeña; a medida que diseñe el sistema, descubrirá nuevas entidades y relaciones. Una vez que tenga el diseño de alto nivel más claro, podrá comenzar a construir la lista de campos/columnas relevantes para cada entidad.*
+A continuación se detalla cada entidad con sus campos principales relevantes para el diseño:
 
-*Preguntas útiles:*
+### Tabla: User
 
-- *¿Quiénes son los actores del sistema? ¿Se superponen?*
-- *¿Cuáles son los sustantivos o recursos necesarios para satisfacer los requisitos funcionales?*
+| Columna     | Tipo         | Restricciones                           | Descripción                          |
+|------------|-------------|----------------------------------------|--------------------------------------|
+| userId     | UUID        | PK                                     | Identificador único del usuario      |
+| username   | VARCHAR(30) | UNIQUE, NOT NULL, length(3–30)         | Nombre de usuario visible            |
+| email      | TEXT        | UNIQUE, NOT NULL                       | Correo electrónico                   |
+| displayName| VARCHAR(100)| NOT NULL, length(1–100)                | Nombre mostrado                      |
+| bio        | VARCHAR(160)| length(0–160)                          | Biografía del perfil                 |
+| avatarUrl  | TEXT        |                                        | URL de la foto de perfil             |
+| createdAt  | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP              | Fecha de creación                    |
+| verified   | BOOLEAN     | DEFAULT FALSE                          | Cuenta verificada                    |
 
-*Ejemplos para un sistema de mensajería:*
 
-- *Usuario*
-- *Mensaje*
-- *Conversación*
 
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
+### Tabla: Chirp (Twit)
+
+| Columna      | Tipo         | Restricciones                                      | Descripción               |
+|-------------|-------------|---------------------------------------------------|---------------------------|
+| chirpId     | UUID        | PK                                                | Identificador del chirp   |
+| userId      | UUID        | FK → User(userId), INDEX                          | Usuario que publicó       |
+| content     | VARCHAR(280)| NOT NULL, length(1–280)                           | Texto del chirp           |
+| mediaUrls   | TEXT[]      |                                                   | URLs de imágenes/videos   |
+| createdAt   | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP, SORT KEY               | Fecha de publicación      |
+| likesCount  | INTEGER     | DEFAULT 0                                         | Contador de likes         |
+| repostsCount| INTEGER     | DEFAULT 0                                         | Contador de reposts       |
+
+
+
+
+### Tabla: Follow
+
+| Columna    | Tipo      | Restricciones                                      | Descripción            |
+|-----------|----------|---------------------------------------------------|------------------------|
+| followerId| UUID     | PK (compuesta), FK → User(userId)                 | Usuario que sigue      |
+| followedId| UUID     | PK (compuesta), FK → User(userId)                 | Usuario seguido        |
+| createdAt | TIMESTAMP| DEFAULT CURRENT_TIMESTAMP                         | Fecha del follow       |
+
+
+
+### Tabla: Like
+
+| Columna   | Tipo      | Restricciones                                      | Descripción                |
+|----------|----------|---------------------------------------------------|----------------------------|
+| userId   | UUID     | PK (compuesta), FK → User(userId)                 | Usuario que dio like       |
+| chirpId  | UUID     | PK (compuesta), FK → Chirp(chirpId)               | Chirp que recibió like     |
+| createdAt| TIMESTAMP| DEFAULT CURRENT_TIMESTAMP                         | Fecha del like             |
+
+
 
 - ...
 - ...
