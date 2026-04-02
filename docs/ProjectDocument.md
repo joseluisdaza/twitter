@@ -141,51 +141,7 @@ A continuación se detalla cada entidad con sus campos principales relevantes pa
 
 
 
-# Diagrama ER (Estructura de la base de datos)
 
-Este es un diagrama ER que muestra la estructura de la base de datos para una aplicación de redes sociales:
-
-```mermaid
-erDiagram
-    USER {
-        UUID userId PK
-        String username "unique"
-        String email
-        String bio
-        String avatarUrl
-        Timestamp createdAt
-    }
-    CHIRP {
-        UUID chirpId PK
-        UUID userId FK
-        String content
-        String mediaUrls
-        Integer likesCount
-        Timestamp createdAt
-    }
-    COMMENT {
-        UUID commentId PK
-        UUID chirpId FK
-        UUID userId FK
-        String content
-        Timestamp createdAt
-    }
-    FOLLOW {
-        UUID followerId FK
-        UUID followedId FK
-        Timestamp createdAt
-    }
-    LIKE {
-        UUID userId FK
-        UUID chirpId FK
-    }
-
-    USER ||--o| CHIRP : publica
-    CHIRP ||--o| COMMENT : recibe
-    CHIRP ||--o| LIKE : recibe like
-    USER ||--o| FOLLOW : sigue_es_siguido
-    USER ||--o| LIKE : da_like
-```
 ---
 
 ## 3. API o Interfaz del Sistema *(~5 minutos)*
@@ -244,32 +200,25 @@ DELETE /v1/recursos/{recursoId}
 
 ## 4. Flujo de Datos *(~5 minutos)* [Opcional]
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Para algunos sistemas de backend, especialmente los sistemas de procesamiento de datos, puede ser útil describir la secuencia de alto nivel de acciones o procesos que el sistema realiza sobre las entradas para producir las salidas deseadas. Si su sistema no involucra una larga secuencia de acciones, omita esta sección.*
-
-*Los diagramas de secuencia son una excelente manera de comunicar los detalles de los flujos de llamadas entre sistemas o componentes. En sus diagramas, incluya flujos alternativos y agrupe las llamadas que ocurren en paralelo.*
-
-*Los gráficos de flujo de datos son útiles cuando se desarrollan flujos complejos de procesamiento por lotes o streaming. A diferencia de los diagramas de secuencia, no describen el flujo de control (bucles, ramas); use en cambio un diagrama de actividad o diagrama de flujo para esos elementos.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
 
 Fuente del Diagrama
 
 ```mermaid
 sequenceDiagram
     actor Usuario
-    participant SitioWeb
-    participant Servicio
-    participant BaseDeDatos
+    participant API
+    participant AuthService
+    participant PostService
+    participant DB
 
-    Usuario->>SitioWeb: 1 pedir pizza
-    SitioWeb->>Servicio: 2 guardar pedido
-    Servicio->>BaseDeDatos: 3 actualizar / confirmar
-    BaseDeDatos-->>Servicio: 4 ID de transacción
-    Servicio-->>SitioWeb: 5 ID de transacción
-    SitioWeb->>SitioWeb: crear recibo
-    SitioWeb-->>Usuario: 6 recibo
+    Usuario->>API: POST /v1/chirps (Bearer token)
+    API->>AuthService: validar token
+    AuthService->>API: userId + roles
+    API->>PostService: createChirp
+    PostService->>DB: INSERT Chirp + actualizar contadores
+    DB-->>PostService: OK
+    PostService-->>API: Chirp creado
+    API-->>Usuario: 201 Created
 ```
 
 ---
@@ -379,21 +328,50 @@ Ejemplo (Diagrama ER PlantUML):
 
 Fuente del Diagrama
 
+# Diagrama ER (Estructura de la base de datos)
+
+Este es un diagrama ER que muestra la estructura de la base de datos para una aplicación de redes sociales:
+
 ```mermaid
 erDiagram
-    MiTablaA {
-        VARCHAR id PK
-        BIGINT foo FK
-        VARCHAR region
-        TIMESTAMP actualizado
+    USER {
+        UUID userId PK
+        String username "unique"
+        String email
+        String bio
+        String avatarUrl
+        Timestamp createdAt
+    }
+    CHIRP {
+        UUID chirpId PK
+        UUID userId FK
+        String content
+        String mediaUrls
+        Integer likesCount
+        Timestamp createdAt
+    }
+    COMMENT {
+        UUID commentId PK
+        UUID chirpId FK
+        UUID userId FK
+        String content
+        Timestamp createdAt
+    }
+    FOLLOW {
+        UUID followerId FK
+        UUID followedId FK
+        Timestamp createdAt
+    }
+    LIKE {
+        UUID userId FK
+        UUID chirpId FK
     }
 
-    MiTablaB {
-        BIGINT foo PK
-        VARCHAR nombre
-    }
-
-    MiTablaA }o--|| MiTablaB : fk_MiTablaB
+    USER ||--o| CHIRP : publica
+    CHIRP ||--o| COMMENT : recibe
+    CHIRP ||--o| LIKE : recibe like
+    USER ||--o| FOLLOW : sigue_es_siguido
+    USER ||--o| LIKE : da_like
 ```
 
 Ejemplo (Diagrama ER DrawIO):
