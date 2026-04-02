@@ -1,14 +1,6 @@
-# Plantilla de Documento de Diseño Técnico
+# PROYECTO CHIRP - Diseño Técnico
 
 **ESTADO DEL DOCUMENTO:** REVISADO
-
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Instrucciones:*
-
-*Esta plantilla está destinada a ser utilizada por equipos de ingeniería para comunicar diseños técnicos de proyectos. Los equipos son libres de determinar qué proyectos merecen la elaboración de un documento de diseño técnico y la realización de sesiones de revisión; sin embargo, es una excelente manera de obtener retroalimentación valiosa de los interesados.*
-
-*Siempre que su proyecto abarque múltiples sistemas, requiera algún tipo de participación de equipos externos, o tenga el potencial de impactos significativos en sus dependencias o servicios posteriores, debe crear un documento de diseño para ayudar a comunicarse con esos equipos externos.*
 
 *Es posible que no todas las secciones apliquen a todos los proyectos; simplemente elimine las secciones que no apliquen. Los equipos son libres de determinar el nivel de detalle a incluir en sus diseños, por ejemplo, solo el enfoque de alto nivel o componentes detallados de bajo nivel, diagramas de clases y algoritmos. Proporcionar un documento de diseño claro y exhaustivo garantizará que reciba la mejor retroalimentación más útil de sus revisores. Esta plantilla está destinada a proporcionarle un punto de partida, un esquema y ejemplos de artefactos de diseño que puede elegir incluir.*
 
