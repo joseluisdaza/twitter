@@ -33,81 +33,24 @@ Chirp es una plataforma de microblogging social en tiempo real (similar a X/Twit
 
 ## Alcance y Fases
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+Fase 1 (esta entrega):** CRUD de usuarios, chirps, follows, likes y comentarios + AuthN/AuthZ completa.
 
-*Instrucciones:*
-
-*Si hay limitaciones o si el proyecto se está dividiendo en múltiples fases, proporcione esos detalles en esta sección. Si no hay fases y todos los requisitos se incluyen en la versión inicial, entonces elimine esta sección.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-La Fase 1 incluye:
-
-- ...algo en la fase 1...
-- ...algo en la fase 1...
-
-La Fase 2 incluye:
-
-- ...algo en la fase 2...
-- ...algo en la fase 2...
-
-Fuera del alcance:
-
-- ...algo fuera del alcance del proyecto...
-- ...algo fuera del alcance del proyecto...
-
----
+Fuera del alcance (Fase 2/3): Notificaciones push, búsqueda avanzada con Elasticsearch, trending topics, moderación IA, monetización.
 
 ## 1. Requerimientos *(~5 minutos)*
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*El objetivo de esta sección es obtener una comprensión clara del sistema que se va a diseñar. Divida los requisitos en las tres subsecciones siguientes. Mantenga los requisitos enfocados: el objetivo del resto del documento es desarrollar un sistema que cumpla los requisitos identificados aquí, así que sea estratégico en su priorización.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
 ### 1.1 Requerimientos Funcionales
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Los requisitos funcionales son declaraciones del tipo "Los usuarios/clientes deben poder...". Estas son las características principales del sistema y deben ser lo primero que discuta con sus interesados. Haga preguntas dirigidas como si estuviera hablando con un cliente o gerente de producto ("¿el sistema necesita hacer X?", "¿qué pasaría si Y?") para llegar a una lista priorizada de características principales.*
-
-*Mantenga su lista enfocada. Muchos de estos sistemas tienen cientos de funcionalidades, pero su trabajo es identificar y priorizar las 3 más importantes. Una lista larga perjudicará más que ayudará.*
-
-*Ejemplos:*
-
-- *Los usuarios deben poder publicar mensajes.*
-- *Los usuarios deben poder seguir a otros usuarios.*
-- *Los usuarios deben poder ver el contenido de los usuarios que siguen.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-1. Los usuarios deben poder...
-2. Los usuarios deben poder...
-3. Los usuarios deben poder...
+1. Los usuarios autenticados deben poder crear y publicar un chirp (Equivalente a un Twit)
+2. Los usuarios autenticados deben poder interactuar con los chirps publicando likes.
+3. Los usuarios autenticados deben poder seguir y dejar de seguir a otros usuarios.
 
 ### 1.2 Requerimientos No Funcionales
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Los requisitos no funcionales son declaraciones sobre las cualidades del sistema importantes para sus usuarios. Se pueden formular como "El sistema debe..." o "El sistema debe ser...". Es importante que estén contextualizados y, donde sea posible, cuantificados. Por ejemplo, "el sistema debe ser de baja latencia" es obvio y poco significativo. "El sistema debe tener búsqueda de baja latencia, < 500 ms" es más útil.*
-
-*Identifique los 3 a 5 más relevantes para su sistema. Considere los siguientes aspectos:*
-
-1. *Teorema CAP: ¿Su sistema debe priorizar consistencia o disponibilidad? Recuerde que la tolerancia a particiones se da por sentada en sistemas distribuidos.*
-2. *Restricciones de Entorno: ¿Existen restricciones en el entorno de ejecución? Por ejemplo, ¿ejecuta en dispositivos móviles con batería limitada, memoria limitada o ancho de banda limitado?*
-3. *Escalabilidad: ¿Tiene requisitos únicos de escalado, como tráfico en ráfagas a cierta hora, o eventos que causen un aumento significativo de tráfico? Considere también la proporción de lecturas vs escrituras.*
-4. *Latencia: ¿Qué tan rápido debe responder el sistema? Identifique específicamente las operaciones que requieren cómputo significativo.*
-5. *Durabilidad: ¿Qué tan importante es que los datos no se pierdan? Un sistema bancario no puede tolerar pérdida de datos; una red social quizás sí.*
-6. *Seguridad: ¿Qué tan seguro debe ser el sistema? Considere protección de datos, control de acceso y cumplimiento normativo.*
-7. *Tolerancia a Fallos: ¿Cómo debe manejar el sistema las fallas? Considere redundancia, failover y mecanismos de recuperación.*
-8. *Cumplimiento: ¿Hay requisitos legales o normativos que el sistema deba cumplir? Considere estándares de la industria y leyes de protección de datos.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-1. El sistema debe ser altamente disponible, priorizando disponibilidad sobre consistencia (CAP).
-2. El sistema debe ser capaz de escalar para soportar [N] usuarios activos diarios (DAU).
-3. El sistema debe tener baja latencia en [operación crítica], con tiempos de respuesta menores a [X ms].
+1. El sistema debe ser altamente disponible en un entorno de desarrollo/local, priorizando disponibilidad sobre consistencia fuerte (Teorema CAP: AP), utilizando una base de datos que soporte escalado horizontal
+2. El sistema debe soportar al menos 100 usuarios concurrentes simulados y 500 chirps por minuto en pruebas de carga básicas, sin degradación perceptible en la experiencia del usuario.
+3. El sistema debe garantizar durabilidad de los datos mediante el uso de almacenamiento persistente.
+4. El sistema debe implementar autenticación y autorización segura mediante OIDC/SSO con JWT
 
 ### 1.3 Estimación de Capacidad
 
