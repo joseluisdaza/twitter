@@ -306,23 +306,36 @@ Base de Datos: Se utilizará un servicio gestionado para la base de datos relaci
 Canalizaciones (CI/CD): Se implementarán nuevas canalizaciones de integración y entrega continua utilizando GitHub Actions. Al integrar nuevo código a la rama principal, el flujo ejecutará las pruebas automatizadas, construirá la nueva imagen de Docker y la desplegará en el entorno de producción, garantizando actualizaciones ágiles y con mínima intervención manual.
 
 ### Componentes
+El sistema Chirp está compuesto por los siguientes componentes principales que interactúan entre sí para cumplir los requisitos funcionales y no funcionales definidos. Todos los componentes están diseñados para funcionar en un entorno de desarrollo (local + AWS Free Tier).
+1. Componentes Principales
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+API Layer (Frontend + API Gateway)
+Punto de entrada del sistema. Recibe todas las solicitudes HTTP de los clientes (web o móvil). Se encarga de la autenticación inicial y enruta las peticiones al Backend Service.
+Backend Service
+Servicio principal de la aplicación (implementado en Java/Spring Boot o similar). Contiene toda la lógica de negocio: validación de chirps, manejo de follows, likes, comentarios y generación del timeline. Extrae el userId del JWT y aplica reglas de autorización.
+Authentication Service (OIDC Provider)
+Proveedor de identidad externo (Keycloak self-hosted o Auth0). Maneja login, registro, emisión y validación de tokens JWT (Access Token + Refresh Token).
+Database Layer (Amazon DynamoDB)
+Almacenamiento persistente principal. Utiliza Single Table Design con índices secundarios para soportar consultas eficientes de usuarios, chirps y relaciones.
+Cache Layer (Redis)
+Almacena timelines recientes de usuarios para reducir latencia en la operación más crítica (carga del timeline personalizado). En desarrollo se puede usar Redis local o Docker.
+Storage Layer (Amazon S3)
+Almacenamiento de archivos multimedia (imágenes/videos) adjuntos a los chirps. Solo se guarda la URL en DynamoDB.
 
-*Explique los componentes que está agregando o modificando y cómo interactúan con otros. Un diagrama de componentes es un artefacto de diseño útil para comunicar eficientemente los detalles.*
+2. Interacciones entre Componentes
+El flujo típico de una solicitud es el siguiente:
 
-*En los diagramas de componentes, elija una convención consistente para las flechas:*
+El cliente envía una petición HTTP al API Layer con el token JWT en el header Authorization: Bearer <token>.
+El API Layer valida el token con el Authentication Service.
+La solicitud se reenvía al Backend Service.
+El Backend Service:
+Extrae el userId del token.
+Consulta/escribe en DynamoDB.
+Consulta Redis cuando se necesita leer el timeline.
+Sube archivos a S3 si el chirp incluye media.
 
-- *Flujo de Llamadas — Llamador → Llamado*
-- *Flujo de Datos — Origen → Destino*
+La respuesta se devuelve al cliente a través del API Layer.
 
-*Asegúrese de incluir el código fuente de sus diagramas para que otros puedan editarlos posteriormente.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-Ejemplo (PlantUML):
-
-Fuente del Diagrama
 
 ```mermaid
 graph TD
