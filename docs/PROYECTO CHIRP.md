@@ -8,43 +8,44 @@ Chirp es una plataforma de microblogging social en tiempo real (similar a X/Twit
 - Se utilizará un proveedor de identidad externo para OIDC/SSO.
 
 ## Alcance y Fases
-Fase 1 (esta entrega):** CRUD de usuarios, chirps, follows, likes y comentarios + AuthN/AuthZ completa.
+**Fase 1 (esta entrega):** CRUD de usuarios, chirps, follows, likes y comentarios + AuthN/AuthZ completa.<br>
 Fuera del alcance (Fase 2/3): Notificaciones push, búsqueda avanzada con Elasticsearch, trending topics.
 
 ## 1. Requerimientos *(~5 minutos)*
 
 ### 1.1 Requerimientos Funcionales
 
-RF1: Creación de Publicaciones (Prioridad Alta)  
+**RF1: Creación de Publicaciones (Prioridad Alta)**
 
-Descripción del requerimiento: El núcleo de escritura del sistema. Permite la inserción de nuevos registros de texto corto en la base de datos, reflejándose inmediatamente en el perfil del autor.
-Historia de Usuario (HU-01):
-Actor: Como usuario autenticado...
-Objetivo: ...quiero crear y publicar un chirp de hasta 280 caracteres...
-Razón: ...para compartir mis ideas y actualizaciones al instante con mi audiencia.
-Criterios de Aceptación:
+Descripción del requerimiento: El núcleo de escritura del sistema. Permite la inserción de nuevos registros de texto corto en la base de datos, reflejándose inmediatamente en el perfil del autor.<br>
+**Historia de Usuario (HU-01):**<br>
+Actor: Como usuario autenticado...<br>
+Objetivo: ...quiero crear y publicar un chirp de hasta 280 caracteres...<br>
+Razón: ...para compartir mis ideas y actualizaciones al instante con mi audiencia.<br>
+Criterios de Aceptación:<br>
 Los usuarios deben poder ingresar texto en un área de captura.
 El sistema debe mostrar un indicador visual que bloquee la publicación si el texto excede los 280 caracteres.
-El sistema debe guardar la publicación relacionándola con el usuario y mostrarla de inmediato tras presionar el botón "Publicar".
+El sistema debe guardar la publicación relacionándola con el usuario y mostrarla de inmediato tras presionar el botón "Publicar".<br>
 
-RF2: Generación del Timeline (Prioridad Alta)
-Descripción del requerimiento: El motor de lectura principal. Requiere recolectar y ordenar las publicaciones basándose en el grafo de seguidores del usuario activo para construir su feed principal.
-Historia de Usuario (HU-02):
-Actor: Como usuario de la plataforma...
-Objetivo: ...quiero visualizar un timeline personalizado ordenado cronológicamente...
-Razón: ...para mantenerme actualizado de forma centralizada con las publicaciones de las cuentas que sigo.
-Criterios de Aceptación:
+**RF2: Generación del Timeline (Prioridad Alta)**
+
+Descripción del requerimiento: El motor de lectura principal. Requiere recolectar y ordenar las publicaciones basándose en el grafo de seguidores del usuario activo para construir su feed principal.<br>
+**Historia de Usuario (HU-02):**<br>
+Actor: Como usuario de la plataforma...  <br>
+Objetivo: ...quiero visualizar un timeline personalizado ordenado cronológicamente...<br>
+Razón: ...para mantenerme actualizado de forma centralizada con las publicaciones de las cuentas que sigo.<br>
+Criterios de Aceptación:<br>
 Los usuarios deben poder acceder a una pantalla principal inmediatamente después de iniciar sesión.
 El sistema debe mostrar un flujo continuo de chirps provenientes únicamente de los perfiles a los que el usuario ha dado "Follow".
-Los usuarios deben poder hacer scroll hacia abajo para cargar publicaciones más antiguas mediante paginación o scroll infinito sin bloquear la interfaz.
+Los usuarios deben poder hacer scroll hacia abajo para cargar publicaciones más antiguas mediante paginación o scroll infinito sin bloquear la interfaz.<br>
 
-RF3: Interacción Social - Likes (Prioridad Media)
-Descripción del requerimiento: Sistema de validación positiva. Registra la interacción única entre un usuario y una publicación, actualizando contadores de forma transaccional.
-Historia de Usuario (HU-03):
-Actor: Como usuario activo...
-Objetivo: ...quiero dar o quitar "Like" a los chirps de la comunidad...
-Razón: ...para mostrar aprecio por el contenido de otros y participar en la red.
-Criterios de Aceptación:
+**RF3: Interacción Social - Likes (Prioridad Media)**<br>
+Descripción del requerimiento: Sistema de validación positiva. Registra la interacción única entre un usuario y una publicación, actualizando contadores de forma transaccional.<br>
+**Historia de Usuario (HU-03):<br>**
+Actor: Como usuario activo...<br>
+Objetivo: ...quiero dar o quitar "Like" a los chirps de la comunidad...<br>
+Razón: ...para mostrar aprecio por el contenido de otros y participar en la red.<br>
+Criterios de Aceptación:<br>
 Los usuarios deben poder hacer clic en un icono de corazón ("Like") para sumar una unidad al contador público de esa publicación.
 El sistema debe validar en la base de datos que un usuario no pueda registrar más de un Like en el mismo chirp.
 Los usuarios deben poder revertir su "Like" haciendo clic nuevamente (toggle) para disminuir el contador.
@@ -52,20 +53,20 @@ Los usuarios deben poder revertir su "Like" haciendo clic nuevamente (toggle) pa
 ### 1.2 Requerimientos No Funcionales
 
 RNF 1: Latencia (Dimensión: Latencia)
-Requerimiento: El sistema backend debe generar y entregar la respuesta de lectura del Timeline principal en un tiempo < 400 ms en el percentil 95 (p95) bajo condiciones de tráfico normal.
+Requerimiento: El sistema backend debe generar y entregar la respuesta de lectura del Timeline principal en un tiempo < 400 ms en el percentil 95 (p95) bajo condiciones de tráfico normal.<br>
 Contextualización: Para lograr esto sin arquitecturas excesivamente complejas en la fase inicial, se implementará paginación basada en cursores (cargando lotes de 20 chirps) y se evitarán consultas anidadas profundas en la base de datos al momento de cargar el feed.
 
 RNF 2: Escalabilidad de la Infraestructura (Dimensión: Escalabilidad)
-Requerimiento: La arquitectura contenerizada debe ser capaz de soportar una base de 10,000 Usuarios Activos Diarios (DAU) y manejar picos de concurrencia de hasta 100 Peticiones Por Segundo (QPS) sin degradación del servicio.
+Requerimiento: La arquitectura contenerizada debe ser capaz de soportar una base de 1000 Usuarios Activos Diarios (DAU) y manejar picos de concurrencia de hasta 100 Peticiones Por Segundo (QPS) sin degradación del servicio.<br>
 Contextualización: Se asume una proporción de operaciones de lectura/escritura de 10:1. Para cumplir con esto de forma realista, se desplegarán múltiples instancias del contenedor de la API (Node.js/Express) balanceadas, separando las cargas de trabajo de la base de datos relacional y documental.
 
-RNF 3: Disponibilidad y Teorema CAP (Dimensión: CAP / Tolerancia a fallos)
-Requerimiento: El sistema debe garantizar un 99.9% de uptime mensual (permitiendo un máximo de ~43 minutos de inactividad al mes) para las funciones críticas: leer el timeline y publicar chirps.
+RNF 3: Disponibilidad y Teorema CAP (Dimensión: CAP / Tolerancia a fallos)<br>
+Requerimiento: El sistema debe garantizar un 99.9% de uptime mensual (permitiendo un máximo de ~43 minutos de inactividad al mes) para las funciones críticas: leer el timeline y publicar chirps.<br>
 Contextualización: El sistema priorizará la Disponibilidad (A) sobre la Consistencia fuerte (C) del Teorema CAP. Si hay alta carga o falla un proceso asíncrono, se acepta una consistencia eventual donde los contadores secundarios (cantidad total de likes o respuestas) puedan tardar hasta 5 segundos en reflejarse correctamente en todos los clientes.
 
-RNF 4: Restricciones de Seguridad (Dimensión: Seguridad)
-Requerimiento: Las APIs públicas del sistema deben aplicar políticas de Rate Limiting que bloqueen las peticiones de escritura si un usuario supera el límite de 30 chirps creados por hora. Además, el 100% de los datos de entrada de texto deben ser sanitizados.
-Contextualización: Esto previene ataques de denegación de servicio (DDoS) a nivel de aplicación, controla el spam automatizado (bots) y asegura que no exista inyección de código malicioso (XSS) que afecte el renderizado en el frontend.
+RNF 4: Restricciones de Seguridad (Dimensión: Seguridad)<br>
+Requerimiento: Las APIs públicas del sistema deben aplicar políticas de Rate Limiting que bloqueen las peticiones de escritura si un usuario supera el límite de 30 chirps creados por hora. Además, el 100% de los datos de entrada de texto deben ser sanitizados.<br>
+Contextualización: Esto previene ataques de denegación de servicio (DDoS) a nivel de aplicación, controla el spam automatizado (bots) y asegura que no exista inyección de código malicioso (XSS) que afecte el renderizado en el frontend.<br>
 
 ### 1.3 Estimación de Capacidad
 
@@ -98,11 +99,11 @@ Contextualización: Esto previene ataques de denegación de servicio (DDoS) a ni
 Las entidades principales representan los recursos centrales que el sistema debe gestionar, persistir y exponer a través de la API. Estas entidades se derivan directamente de los requisitos funcionales y forman la base del modelo de datos y del diseño de la API REST con Smithy.
 Entidades Principales Identificadas:
 
-User – Representa a los usuarios de la plataforma.
-Chirp – Representa las publicaciones (equivalente a un tweet o post).
-Follow – Representa la relación de seguimiento entre usuarios.
-Like – Representa la interacción de “me gusta” en un chirp.
-Comment – Representa los comentarios realizados en un chirp.
+User – Representa a los usuarios de la plataforma.<br>
+Chirp – Representa las publicaciones (equivalente a un tweet o post).<br>
+Follow – Representa la relación de seguimiento entre usuarios.<br>
+Like – Representa la interacción de “me gusta” en un chirp.<br>
+Comment – Representa los comentarios realizados en un chirp.<br>
 
 A continuación se detalla cada entidad con sus campos principales relevantes para el diseño:
 
@@ -153,8 +154,6 @@ A continuación se detalla cada entidad con sus campos principales relevantes pa
 | userId   | UUID     | PK (compuesta), FK → User(userId)                 | Usuario que dio like       |
 | chirpId  | UUID     | PK (compuesta), FK → Chirp(chirpId)               | Chirp que recibió like     |
 | createdAt| TIMESTAMP| DEFAULT CURRENT_TIMESTAMP                         | Fecha del like             |
-
-
 
 
 ---
@@ -265,40 +264,26 @@ graph TD
     class NoteDB note
 ```
 #### Flujo de Datos por Endpoint (Satisfaciendo los Requerimientos)
-La arquitectura dibujada arriba resuelve nuestros tres requerimientos funcionales principales de la siguiente manera:
-Flujo para Crear un Chirp (POST /api/chirps):
+La arquitectura dibujada arriba resuelve nuestros tres requerimientos funcionales principales de la siguiente manera:<br>
+Flujo para Crear un Chirp (POST /api/chirps):<br>
 El Cliente Web envía el texto del chirp y el token de autenticación (JWT) al Backend API.
 La API valida la identidad del usuario y guarda el contenido en la tabla Chirps de la Base de Datos (PostgreSQL).
-Si el usuario incluye una imagen: La API solicita una URL prefirmada a AWS S3 y se la devuelve al cliente. El cliente sube la imagen directamente a S3, y la URL final se asocia al chirp en la base de datos.
-Flujo para Generar el Timeline (GET /api/timeline):
-El Cliente Web solicita su feed principal.
-La API ejecuta una consulta en la Base de Datos, uniendo (JOIN) la tabla Follows (para saber a quién sigue el usuario) con la tabla Chirps, filtrando por los más recientes y aplicando paginación.
-Si los chirps incluyen imágenes, el cliente las descarga rápidamente a través de la CDN, reduciendo la carga en nuestro servidor principal.
-Flujo para Dar Like (POST /api/chirps/:id/like):
-El Cliente Web envía la petición al hacer clic en el botón.
-La API inserta un registro en la tabla pivote Likes dentro de la Base de Datos (vinculando el userId y el chirpId) y actualiza el contador.
+Si el usuario incluye una imagen: La API solicita una URL prefirmada a AWS S3 y se la devuelve al cliente. El cliente sube la imagen directamente a S3, y la URL final se asocia al chirp en la base de datos.<br>
+Flujo para Generar el Timeline (GET /api/timeline):<br>
+El Cliente Web solicita su feed principal.<br>
+La API ejecuta una consulta en la Base de Datos, uniendo (JOIN) la tabla Follows (para saber a quién sigue el usuario) con la tabla Chirps, filtrando por los más recientes y aplicando paginación.<br>
+Si los chirps incluyen imágenes, el cliente las descarga rápidamente a través de la CDN, reduciendo la carga en nuestro servidor principal.<br>
+Flujo para Dar Like (POST /api/chirps/:id/like):<br>
+El Cliente Web envía la petición al hacer clic en el botón.<br>
+La API inserta un registro en la tabla pivote Likes dentro de la Base de Datos (vinculando el userId y el chirpId) y actualiza el contador.<br>
 #### Entorno de Ejecución e Infraestructura
-Para garantizar que el sistema cumpla con las métricas de rendimiento y escalabilidad (10,000 DAU y 100 QPS) sin sobrecomplicar la operación inicial, la infraestructura se gestionará de la siguiente manera:
-Aprovisionamiento y Despliegue: Se aprovisionará infraestructura nueva en la nube (AWS). El Backend API no se ejecutará en servidores tradicionales, sino que estará contenerizado usando Docker. Esto permitirá levantar múltiples instancias de la aplicación de forma idéntica y predecible.
-Base de Datos: Se utilizará un servicio gestionado para la base de datos relacional (como Amazon RDS para PostgreSQL), delegando la responsabilidad de los respaldos automatizados, la seguridad en reposo y el mantenimiento del hardware al proveedor de la nube.
-Canalizaciones (CI/CD): Se implementarán nuevas canalizaciones de integración y entrega continua utilizando GitHub Actions. Al integrar nuevo código a la rama principal, el flujo ejecutará las pruebas automatizadas, construirá la nueva imagen de Docker y la desplegará en el entorno de producción, garantizando actualizaciones ágiles y con mínima intervención manual.
+Para garantizar que el sistema cumpla con las métricas de rendimiento y escalabilidad (10,000 DAU y 100 QPS) sin sobrecomplicar la operación inicial, la infraestructura se gestionará de la siguiente manera:<br>
+Aprovisionamiento y Despliegue: Se aprovisionará infraestructura nueva en la nube (AWS). El Backend API no se ejecutará en servidores tradicionales, sino que estará contenerizado usando Docker. Esto permitirá levantar múltiples instancias de la aplicación de forma idéntica y predecible.<br>
+Base de Datos: Se utilizará un servicio gestionado para la base de datos relacional (como Amazon RDS para PostgreSQL), delegando la responsabilidad de los respaldos automatizados, la seguridad en reposo y el mantenimiento del hardware al proveedor de la nube.<br>
+Canalizaciones (CI/CD): Se implementarán nuevas canalizaciones de integración y entrega continua utilizando GitHub Actions. Al integrar nuevo código a la rama principal, el flujo ejecutará las pruebas automatizadas, construirá la nueva imagen de Docker y la desplegará en el entorno de producción, garantizando actualizaciones ágiles y con mínima intervención manual.<br>
 
 ### Componentes
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Explique los componentes que está agregando o modificando y cómo interactúan con otros. Un diagrama de componentes es un artefacto de diseño útil para comunicar eficientemente los detalles.*
-
-*En los diagramas de componentes, elija una convención consistente para las flechas:*
-
-- *Flujo de Llamadas — Llamador → Llamado*
-- *Flujo de Datos — Origen → Destino*
-
-*Asegúrese de incluir el código fuente de sus diagramas para que otros puedan editarlos posteriormente.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-Ejemplo (PlantUML):
 
 Fuente del Diagrama
 
