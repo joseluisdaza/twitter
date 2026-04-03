@@ -396,50 +396,53 @@ _El diagrama de temporización de ejemplo va aquí._
 
 ## 6. Inmersiones Profundas *(~10 minutos)*
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Ahora que tiene un diseño de alto nivel, use el tiempo restante para fortalecer su diseño:*
-
-- *Garantizar que se cumplan todos los requisitos no funcionales.*
-- *Abordar casos extremos.*
-- *Identificar y resolver problemas y cuellos de botella.*
-- *Mejorar el diseño basándose en retroalimentación de los revisores.*
-
-*El grado en que lidera proactivamente las inmersiones profundas es proporcional a la senioridad del proyecto. Para proyectos más maduros, el equipo debe ser capaz de identificar estas áreas de forma autónoma y liderar la discusión.*
-
-*Incluya las subsecciones más relevantes para su proyecto y elimine las que no apliquen.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
+Esta sección profundiza en aspectos clave del diseño para garantizar que se cumplan los requisitos funcionales y no funcionales en un entorno de desarrollo y pruebas.
 
 ### 6.1 Esquema de Base de Datos
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+Se utilizará Amazon DynamoDB (modo on-demand) como base de datos principal por su escalabilidad automática, alta disponibilidad y bajo costo en entornos de desarrollo. El esquema está diseñado para soportar patrones de acceso comunes en redes sociales (lecturas de timeline y escrituras dispersas).
 
-*Si necesita realizar cambios de esquema en cualquier almacén de datos existente (por ejemplo, bases de datos NoSQL, MySQL), explique qué cambios se realizan y cómo se mantiene la compatibilidad con versiones anteriores con cualquier componente de software que acceda directamente a los datos. Incluya también una explicación de cualquier actividad de migración de datos.*
+#Tabla User
+| Columna     | Tipo    | Restricciones       | Descripción                |
+| ----------- | ------- | ------------------- | -------------------------- |
+| userId      | String  | PK                  | Identificador único (UUID) |
+| username    | String  | Unique, GSI         | Nombre de usuario único    |
+| email       | String  | Unique              | Correo electrónico         |
+| displayName | String  | -                   | Nombre mostrado            |
+| bio         | String  | Máx. 160 caracteres | Biografía del perfil       |
+| avatarUrl   | String  | -                   | URL de la foto de perfil   |
+| verified    | Boolean | Default: false      | Cuenta verificada          |
+| createdAt   | String  | -                   | Fecha de creación (ISO)    |
 
-*Hay varias formas convenientes de representar el esquema:*
 
-- *Tabla Simple*
-- *Diagramas ER de PlantUML*
-- *Diagramas ER de DrawIO*
+#Tabla Chirp
+| Columna       | Tipo   | Restricciones       | Descripción                              |
+| ------------- | ------ | ------------------- | ---------------------------------------- |
+| chirpId       | String | PK                  | Identificador único del chirp            |
+| userId        | String | GSI                 | Usuario que publicó                      |
+| content       | String | Máx. 280 caracteres | Texto del chirp                          |
+| mediaUrls     | List   | Opcional            | Lista de URLs de imágenes                |
+| createdAt     | String | Sort Key            | Fecha de publicación (orden cronológico) |
+| likesCount    | Number | Default: 0          | Contador de likes                        |
+| repostsCount  | Number | Default: 0          | Contador de reposts                      |
+| parentChirpId | String | Opcional            | Para respuestas/comentarios en hilo      |
 
-*Asegúrese de incluir el código fuente de su diagrama como enlace en este documento.*
+#Tabla Follow
+| Columna    | Tipo   | Restricciones  | Descripción       |
+| ---------- | ------ | -------------- | ----------------- |
+| followerId | String | PK (compuesta) | Usuario que sigue |
+| followedId | String | PK (compuesta) | Usuario seguido   |
+| createdAt  | String | -              | Fecha del follow  |
 
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
 
-Ejemplo (Tabla Simple):
 
-**Tabla: Mi Tabla de Base de Datos**
+#Tabla Like
+| Columna   | Tipo   | Restricciones  | Descripción            |
+| --------- | ------ | -------------- | ---------------------- |
+| userId    | String | PK (compuesta) | Usuario que dio like   |
+| chirpId   | String | PK (compuesta) | Chirp que recibió like |
+| createdAt | String | -              | Fecha del like         |
 
-| Columna | Tipo | Restricciones | Descripción |
-|---|---|---|---|
-| id | VARCHAR | PK, NOT NULL | ID único |
-| foo | BIGINT |  | La cosa que va antes de Bar |
-| bar | TIMESTAMP |  | La cosa que va después de Foo |
-
-Ejemplo (Diagrama ER PlantUML):
-
-Fuente del Diagrama
 
 # Diagrama ER (Estructura de la base de datos)
 
@@ -487,301 +490,115 @@ erDiagram
     USER ||--o| LIKE : da_like
 ```
 
-Ejemplo (Diagrama ER DrawIO):
-
-Fuente del Diagrama
-
-| MiTablaA | MiTablaB |
-|---|---|
-| PK id VARCHAR | PK foo BIGINT |
-| FK foo BIGINT | bar BIGINT |
-| actualizado TIMESTAMP | nombre VARCHAR |
 
 ### 6.2 Escalabilidad e Infraestructura
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+En entorno de desarrollo con 500 DAU simulados, el sistema utiliza servicios gestionados de AWS que escalan automáticamente:
 
-*¿Cómo escala su sistema a medida que crece la demanda? ¿Qué estrategias de escalado horizontal o vertical empleará? ¿Qué límites de servicio podría encontrar? ¿Cuánta concurrencia provisionada o capacidad de lectura/escritura necesitará?*
+DynamoDB on-demand: Escala automáticamente según el tráfico real sin necesidad de aprovisionar capacidad.
+API Gateway + Lambda (o aplicación Spring Boot/EC2 pequeña): Maneja las solicitudes HTTP.
+Caché: Redis (Elasticache o Redis local en desarrollo) para cachear timelines frecuentes y reducir lecturas en DynamoDB.
+Almacenamiento de imágenes: Amazon S3 (para mediaUrls).
 
-*¿Los componentes se ejecutarán en una cuenta de nube existente? ¿O aprovisionará nuevas cuentas para alojar estos componentes?*
+Costo estimado mensual (entorno de desarrollo):
 
-*¿Cuánto costará operar este servicio? Utilice las fórmulas a continuación para calcular un costo estimado. No tiene que ser exacto; el objetivo es estar dentro de un orden de magnitud. Agregue estimaciones similares para cualquier servicio adicional que utilice.*
+DynamoDB: < $5 USD/mes (con ~1 GB de almacenamiento y bajo QPS).
+S3: < $1 USD/mes.
+API Gateway + Lambda: < $2 USD/mes con bajo tráfico.
+Total estimado: $5 – 10 USD/mes (dentro del Free Tier en la mayoría de los casos).
 
-**Total**
-
-La suma de todos los servicios multiplicada por el número de pares de región/etapa en los que operará el servicio.
-
-```text
-sumaDeTodosLosServicios * paresDeRegionEtapa = dólaresPorMes
-```
-
-**Función Serverless**
-
-```text
-memoriaFunciónGB * duraciónPromedio * TPS * costoPorGB-s * 3600 * 24 * 30 = dólaresPorMes
-```
-
-**Almacenamiento de Objetos**
-
-```text
-tamañoCuboTB * costoPorTB = dólaresPorMes
-```
-
-**Base de Datos NoSQL - Almacenamiento**
-
-```text
-tamañoTablaTB * costoPorTB = dólaresPorMes
-```
-
-**Base de Datos NoSQL - Lecturas**
-
-```text
-lecturasPorSegundo * costoPorLectura * 3600 * 24 * 30 = dólaresPorMes
-```
-
-**Base de Datos NoSQL - Escrituras**
-
-```text
-escriturasPorSegundo * costoPorEscritura * 3600 * 24 * 30 = dólaresPorMes
-```
-
-*¿Cuál es el flujo de tráfico de red esperado? Calcule el flujo de tráfico de red esperado para su servicio en un segundo, minuto, hora y día determinados. Tenga en cuenta las cuotas/límites dentro de la región y el tráfico de red entre regiones.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-### 6.3 Métricas y Monitoreo
-
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*¿Cómo medirá el éxito operativo de sus cambios? ¿Qué métricas utilizará? Si hay una falla, ¿cómo lo sabría alguien? ¿Requeriría un examen manual de las métricas en los paneles de control para identificar un problema (enfoque deficiente) o crearía automáticamente un ticket para el equipo de guardia correspondiente que contiene un enlace al procedimiento estándar de operación apropiado (buen enfoque)?*
-
-*Si está agregando o modificando métricas a algún sistema, inclúyalas aquí. Si está agregando o modificando alarmas, inclúyalas aquí. Incluya enlaces a cualquier panel de control operativo o procedimiento estándar de operación pertinente. Cualquier cosa que no haya sido creada aún puede dejarse como TBD.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-Ejemplos:
-
-| Sistema | Métrica | Umbral de Alarma | CTI | Enlaces | Descripción |
-|---|---|---|---|---|---|
-| ServicioEntrada | Tiempo | > 750 milisegundos | Categoría / Tipo / Elemento | Panel de Control | Umbral de latencia del lado del servidor actualizado para dar cuenta de X. |
-| ServicioEntrada | TasaDeLlenado (nueva) | < .1 | Categoría / Tipo / Elemento | TBD | Nueva métrica de tasa de llenado agregada. Cuando esté por debajo del 10%, el equipo de guardia debe examinar la entrega de elementos de línea. |
+El tráfico de red esperado es muy bajo (< 500 KB/s en pico), por lo que no representa un límite.
 
 ### 6.4 Seguridad
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+Autenticación mediante OIDC + Authorization Code Flow con PKCE usando Keycloak (self-hosted) o Auth0.
+Todos los endpoints protegidos con @httpBearerAuth en Smithy.
+El userId siempre se extrae del JWT (sub claim), nunca del body.
+Validación de entradas: longitud máxima, escaping de HTML y patrones regex donde corresponda.
+Prevención de ataques comunes: rate limiting básico en API Gateway y validación estricta para evitar inyección.
 
-*¿Ha pasado su servicio por una revisión de seguridad de aplicaciones? Si no, ese es un requisito para un servicio en producción. ¿Está realizando cambios que deberían merecer una nueva revisión de seguridad o actualizaciones a cualquier Modelo de Amenazas existente?*
-
-*¿Está agregando nuevos puntos de entrada al límite del sistema, como crear una nueva API pública o nueva página web, que podría proporcionar un nuevo vector de ataque potencial? Si es así, es posible que desee configurar Pruebas de Penetración. Si está tomando entradas de los usuarios, ¿está validando los datos para prevenir inyección SQL o de scripts?*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
+No se realizarán pruebas de penetración formales en esta fase, pero se aplicarán buenas prácticas de seguridad OWASP.
 
 ### 6.5 Extensibilidad
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+En tres años, el sistema debería poder escalar desde 500 DAU simulados hasta varios miles de usuarios reales.
+Lo que se soportará en el futuro:
 
-*¿Cómo se verá su servicio en tres años? ¿Qué necesitará soportar entonces que no soporta ahora? ¿Qué nunca soportará, y por qué no? ¿Cómo se verá cuando tenga un uso 10 veces mayor? ¿Cómo se verá cuando tenga un uso 100 veces mayor? ¿Cómo gestionará el inevitable requisito de romper la compatibilidad con versiones anteriores en una interfaz o formato de datos? ¿Cómo funcionará su servicio en nuevas regiones o nuevas particiones?*
+Búsqueda full-text de chirps (usando Elasticsearch o DynamoDB + OpenSearch).
+Notificaciones en tiempo real mediante WebSockets o Server-Sent Events.
+Sistema de recomendaciones básico.
+Soporte completo para multimedia con CDN.
 
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
+Lo que nunca se soportará en esta arquitectura:
 
-### 6.6 Arquitectura a Mayor Escala
+Funcionalidades de mensajería privada (requeriría un diseño completamente diferente de Chat).
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*¿Con qué otros componentes se superpone funcionalmente su servicio? ¿Qué partes de esos servicios deberían moverse para estar en su servicio? ¿Qué partes de su servicio deberían moverse para convertirse en parte de otros servicios? ¿Qué partes deben permanecer separadas porque necesitarán cambiar de forma independiente o el costo de fusionarlas es demasiado alto?*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-### 6.7 Proceso de Lanzamiento
-
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*¿Cómo lanzará su proyecto?*
-
-*¿Cómo se despliega su software a producción? ¿Qué canalizaciones están involucradas? ¿Necesitan desplegarse en cierto orden (no deberían)? ¿Puede alguna de ellas revertirse de forma independiente, sin causar una interrupción?*
-
-*¿Necesita su proyecto ser activado gradualmente bajo un proceso de control de cambios? Si es así, ¿qué equipos de interesados deben ser incluidos como aprobadores? ¿A quién se debe notificar?*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-### 6.8 Despliegues Regionales
-
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*¿En qué regiones está desplegando?*
-
-*¿Todos sus stages regionales tienen todos los servicios que necesita? ¿Omitirá regiones que no ofrecen todos los servicios necesarios, o invertirá en una solución alternativa?*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-### 6.9 Retención de Datos
-
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*¿Por cuánto tiempo necesita retener datos para su sistema? ¿Tiene una política de retención y eliminación definida?*
-
-*¿Dónde crea y persiste datos su sistema? ¿Tiene una estrategia de retención/gestión de datos para cada sistema de persistencia de datos?*
-
-*¿Qué costo de almacenamiento proyecta gastar mensual/anualmente? ¿Qué tan rápido aumentará el volumen de almacenamiento?*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
 
 ### 6.10 Metodología de Pruebas
+Pruebas que se realizarán:
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+Pruebas unitarias: Cobertura > 70% en lógica de negocio (creación de chirp, validaciones, etc.).
+Pruebas de integración: Pruebas automatizadas con Postman o scripts que validen flujos completos (login → crear chirp → seguir usuario → ver timeline).
+Pruebas manuales: Verificación de flujos de usuario finales.
+Pruebas de carga: Simulación de hasta 100 usuarios concurrentes con Locust, midiendo latencia del timeline y creación de chirps.
+Pruebas de seguridad: Verificación de acceso no autorizado y validación de tokens.
 
-*¿Cómo probará sus cambios? ¿Qué pruebas automatizadas implementará para asegurarse de que no haya regresiones en su código después del lanzamiento del proyecto? En esta sección, puede incluir una explicación de:*
+Las pruebas de integración se ejecutarán en la pipeline de CI/CD (GitHub Actions) antes de cualquier merge a main
 
-- *Procedimientos estándar de operación (SOPs) para pruebas manuales.*
-- *Dependencias para pruebas de integración.*
-- *Cobertura de pruebas de integración.*
-- *Etapas de canalización donde se ejecutarán sus pruebas de integración para evitar que las regresiones se desplieguen.*
-- *Trabajos programados para verificar la calidad de los datos en los informes.*
-- *Pruebas automatizadas de interfaz de usuario e infraestructura.*
-- *Pruebas de carga para simular grandes volúmenes de tráfico.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-La cobertura de pruebas incluirá ...
-
-Se están implementando las siguientes dependencias para habilitar las pruebas...
 
 ### 6.11 Dependencias
 
-*--- ELIMINAR ESTA SECCIÓN ---*
 
-*Enumere los sistemas (que no sean los que posee su equipo) que deben cambiar para entregar este proyecto. ¿Qué equipos son propietarios de estos sistemas? ¿Los ha involucrado? ¿Están de acuerdo con su diseño? ¿Se han comprometido a entregar los cambios que necesita en el plazo requerido?*
-
-*Si sus cambios están completamente en sistemas que posee su equipo, puede eliminar esta sección o poner "Ninguno."*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-- TBD
 
 ### 6.12 Operaciones
 
-*--- ELIMINAR ESTA SECCIÓN ---*
 
-*¿Qué partes de su sistema necesitarán intervención del operador en el curso normal del negocio, una vez que el sistema esté funcionando en producción? ¿Qué libros de operaciones necesitará escribir para ejecutar estas intervenciones? ¿Qué herramientas tiene, o necesitará escribir, para hacer estas intervenciones fáciles y correctas?*
-
-*¿Cuál será su primer punto de entrada para verificar si su sistema está funcionando correctamente? ¿Qué widgets tendrá?*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
----
 
 ## Temas de Discusión
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+###Tema de Discusión 1: Elección de Base de Datos para Entorno de Desarrollo
+Problema:
+Necesitamos una base de datos que soporte relaciones (follows, likes, comments) y lecturas frecuentes de timeline, pero que sea fácil de usar y de bajo costo en un entorno académico.
 
-*Instrucciones:*
+Opción 1 [RECOMENDADA] — Amazon DynamoDB (modo on-demand)
+Opción 2 — PostgreSQL (relacional)
+Opción 3 — MongoDB
 
-*Agregue una subsección para cada problema técnico que enfrente al entregar los requisitos, las opciones que ha considerado, sus respectivos compromisos (pros/contras) y la conclusión a la que llegó. Marque la opción que ha seleccionado como **RECOMENDADA**, para que los revisores puedan centrarse y dedicar más tiempo a examinar esa opción.*
+Opción 1 [RECOMENDADA] — Amazon DynamoDB (modo on-demand)
+Se utilizará DynamoDB con Single Table Design + Global Secondary Indexes para las consultas más comunes.
+Pros:
 
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
+Escala automáticamente sin necesidad de aprovisionar capacidad.
+Muy bajo costo en Free Tier para 500 DAU.
+Excelente rendimiento en lecturas y escrituras dispersas.
+Fácil de configurar en entorno de desarrollo.
 
-### Tema de Discusión: El título para la decisión técnica a tomar va aquí.
+Contras:
 
-Aquí hay una explicación del problema y aquí hay algunas opciones...
+Requiere diseño cuidadoso de claves de partición y índices (Single Table Design).
+Las consultas complejas (joins) deben resolverse en aplicación.
 
-- Opción 1 [RECOMENDADA] - Aquí hay un título para la opción 1, que es la solución propuesta.
-- Opción 2 - Aquí hay un título para la opción 2.
-- Opción 3 - Aquí hay un título para la opción 3.
-
-#### Opción 1 [RECOMENDADA] - Aquí hay un título para la opción 1.
-
-En este enfoque, ...los detalles van aquí junto con cualquier artefacto de diseño útil...
-
-**Pros:**
-
-- Aquí hay una razón por la que deberíamos usar este enfoque.
-- Aquí hay otra razón por la que deberíamos usar este enfoque.
-
-**Contras:**
-
-- Aquí hay una razón por la que este enfoque no es ideal.
-- Aquí hay otra razón.
-
-#### Opción 2 - Aquí hay un título para la opción 2.
-
-En este enfoque, ...los detalles van aquí junto con cualquier artefacto de diseño útil...
-
-**Pros:**
-
-- Aquí hay una razón por la que deberíamos usar este enfoque.
-- Aquí hay otra razón por la que deberíamos usar este enfoque.
-
-**Contras:**
-
-- Aquí hay una razón por la que este enfoque no es ideal.
-- Aquí hay otra razón.
-
-#### Opción 3 - Aquí hay un título para la opción 3.
-
-En este enfoque, ...los detalles van aquí junto con cualquier artefacto de diseño útil...
-
-**Pros:**
-
-- Aquí hay una razón por la que deberíamos usar este enfoque.
-- Aquí hay otra razón por la que deberíamos usar este enfoque.
-
-**Contras:**
-
-- Aquí hay una razón por la que este enfoque no es ideal.
-- Aquí hay otra razón.
-
-**Conclusión**
-
-Dada la consideración de las opciones y sus respectivos compromisos, hemos decidido optar por la Opción 1, porque ...
-
----
-
-## Interesados
-
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Instrucciones:*
-
-*Enumere los equipos (que no sean el suyo) que se ven afectados por este proyecto. Esto describe quién debe ser incluido en las revisiones de diseño y procesos de control de cambios.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-- TBD
+Opción 2 — PostgreSQL
+Pros: Joins nativos fáciles.
+Contras: Requiere gestión de servidor, escalado más complejo y mayor costo operativo en desarrollo.
+Conclusión
+Se elige DynamoDB porque se alinea mejor con los requisitos no funcionales de escalabilidad automática y bajo mantenimiento en un entorno académico.
 
 ## Contactos
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Instrucciones:*
-
-*Enumere los contactos clave para obtener más información sobre este proyecto. Esto debe incluir el Gerente de Producto, el Gerente de Ingeniería, el Gerente de Programa Técnico y el/los desarrollador(es) técnico(s) principal(es).*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-- Líder Técnico / Autor - ...enlace de perfil aquí...
-- Gerente de Producto (PM) - ...
-- Gerente de Programa Técnico (TPM) - ...
-- Gerente de Ingeniería (SDM) - ...
-
----
+Líder Técnico / Autor — Jose Daza
+Gerente de Producto (PM) — Jorge
+Gerente de Ingeniería (SDM) — Javier
+Desarrolladores principales — Moisés y Mauricio
 
 ## Apéndice
 
 ### Apéndice A - Antecedentes
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Instrucciones:*
-
-*Si su proyecto requiere que el lector tenga información significativa de contexto, entonces póngala aquí en el apéndice. De lo contrario, puede eliminar esta sección.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
 
 ### Apéndice B - Actas de Revisión
 
-*--- ELIMINAR ESTA SECCIÓN ---*
 
-*Instrucciones:*
 
 *Capturar las actas de las reuniones de revisión es una buena manera de registrar las decisiones acordadas y ganar la confianza de sus revisores.*
 
