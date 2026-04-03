@@ -434,25 +434,44 @@ erDiagram
 ## Esquema Logico de la Tabla, Modelo de Datos DYNAMODB
 ```mermaid
 erDiagram
-    CHIRP_TABLE {
-        string PK
-        string SK
-        string entityType
+    USER ||--o{ CHIRP : "publica"
+    USER ||--o{ FOLLOW : "seguidor/seguido"
+    CHIRP ||--o{ COMMENT : "contiene"
+    
+    USER {
+        string userId PK
         string username
         string email
         string bio
         string avatarUrl
-        string content
-        string mediaUrls
-        int likesCount
+        int followersCount
+        int followingCount
         timestamp createdAt
     }
 
-    CHIRP_TABLE ||--o{ USER : contiene
-    CHIRP_TABLE ||--o{ CHIRP : contiene
-    CHIRP_TABLE ||--o{ COMMENT : contiene
-    CHIRP_TABLE ||--o{ FOLLOW : contiene
-    CHIRP_TABLE ||--o{ LIKE : contiene
+    CHIRP {
+        string chirpId PK
+        string userId FK "Referencia al autor"
+        string content
+        string_array mediaUrls
+        int likesCount
+        string_array likedByUsers "Array de UserIDs (Denormalización)"
+        timestamp createdAt
+    }
+
+    COMMENT {
+        string commentId PK
+        string chirpId FK
+        string userId FK
+        string content
+        timestamp createdAt
+    }
+
+    FOLLOW {
+        string followerId FK
+        string followedId FK
+        timestamp createdAt
+    }
 ```
 
 
