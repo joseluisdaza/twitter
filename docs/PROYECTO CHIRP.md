@@ -307,17 +307,17 @@ Canalizaciones (CI/CD): Se implementarán nuevas canalizaciones de integración 
 
 ### Componentes
 El sistema Chirp está compuesto por los siguientes componentes principales que interactúan entre sí para cumplir los requisitos funcionales y no funcionales definidos. Todos los componentes están diseñados para funcionar en un entorno de desarrollo (local + AWS Free Tier).
-1. Componentes Principales
+## 1. Componentes Principales
 
-API Layer (Frontend + API Gateway)
+## API Layer (Frontend + API Gateway)
 Punto de entrada del sistema. Recibe todas las solicitudes HTTP de los clientes (web o móvil). Se encarga de la autenticación inicial y enruta las peticiones al Backend Service.
-Backend Service
+## Backend Service
 Servicio principal de la aplicación (implementado en Java/Spring Boot o similar). Contiene toda la lógica de negocio: validación de chirps, manejo de follows, likes, comentarios y generación del timeline. Extrae el userId del JWT y aplica reglas de autorización.
-Authentication Service (OIDC Provider)
+## Authentication Service (OIDC Provider)
 Proveedor de identidad externo (Keycloak self-hosted o Auth0). Maneja login, registro, emisión y validación de tokens JWT (Access Token + Refresh Token).
-Database Layer (Amazon DynamoDB)
+## Database Layer (Amazon DynamoDB)
 Almacenamiento persistente principal. Utiliza Single Table Design con índices secundarios para soportar consultas eficientes de usuarios, chirps y relaciones.
-Cache Layer (Redis)
+## Cache Layer (Redis)
 Almacena timelines recientes de usuarios para reducir latencia en la operación más crítica (carga del timeline personalizado). En desarrollo se puede usar Redis local o Docker.
 Storage Layer (Amazon S3)
 Almacenamiento de archivos multimedia (imágenes/videos) adjuntos a los chirps. Solo se guarda la URL en DynamoDB.
