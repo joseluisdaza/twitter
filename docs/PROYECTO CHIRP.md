@@ -278,21 +278,6 @@ Canalizaciones (CI/CD): Se implementarán nuevas canalizaciones de integración 
 
 ### Componentes
 
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Explique los componentes que está agregando o modificando y cómo interactúan con otros. Un diagrama de componentes es un artefacto de diseño útil para comunicar eficientemente los detalles.*
-
-*En los diagramas de componentes, elija una convención consistente para las flechas:*
-
-- *Flujo de Llamadas — Llamador → Llamado*
-- *Flujo de Datos — Origen → Destino*
-
-*Asegúrese de incluir el código fuente de sus diagramas para que otros puedan editarlos posteriormente.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-Ejemplo (PlantUML):
-
 Fuente del Diagrama
 
 ```mermaid
@@ -446,6 +431,33 @@ erDiagram
     USER ||--o| LIKE : da_like
 ```
 
+### Esquema Logico de la Tabla, Modelo de Datos DYNAMODB
+```mermaid
+erDiagram
+    CHIRP_TABLE {
+        String PK "Partition Key"
+        String SK "Sort Key"
+        String entityType
+        String username
+        String email
+        String bio
+        String avatarUrl
+        String content
+        String mediaUrls
+        Integer likesCount
+        Timestamp createdAt
+    }
+
+    CHIRP_TABLE ||--o{ USER : contiene
+    CHIRP_TABLE ||--o{ CHIRP : contiene
+    CHIRP_TABLE ||--o{ COMMENT : contiene
+    CHIRP_TABLE ||--o{ FOLLOW : contiene
+    CHIRP_TABLE ||--o{ LIKE : contiene
+
+```
+
+
+
 
 ### 6.2 Escalabilidad e Infraestructura
 
@@ -477,7 +489,7 @@ No se realizarán pruebas de penetración formales en esta fase, pero se aplicar
 
 ### 6.5 Extensibilidad
 
-En tres años, el sistema debería poder escalar desde 500 DAU simulados hasta varios miles de usuarios reales.
+En un futuro, el sistema debería poder escalar desde 500 DAU simulados hasta varios miles de usuarios reales.
 Lo que se soportará en el futuro:
 
 Búsqueda full-text de chirps (usando Elasticsearch o DynamoDB + OpenSearch).
@@ -542,10 +554,14 @@ Se elige DynamoDB porque se alinea mejor con los requisitos no funcionales de es
 
 ## Contactos
 
-Líder Técnico / Autor — Jose Daza
-Gerente de Producto (PM) — Jorge
-Gerente de Ingeniería (SDM) — Javier
-Desarrolladores principales — Moisés y Mauricio
+Líder Técnico / Autor — Jose Daza   
+
+Gerente de Producto (PM) — Jorge  
+
+Gerente de Ingeniería (SDM) — Javier  
+
+Desarrolladores principales — Moisés y Mauricio  
+
 
 ## Apéndice
 
@@ -554,32 +570,45 @@ Desarrolladores principales — Moisés y Mauricio
 
 ### Apéndice B - Actas de Revisión
 
-
-
-*Capturar las actas de las reuniones de revisión es una buena manera de registrar las decisiones acordadas y ganar la confianza de sus revisores.*
-
-*Las actas deben incluir:*
-
-- Fecha de revisión
-- Asistentes - Si no registró todas las personas específicas, al menos describa qué equipos estuvieron representados
-- Comentarios / Preguntas Respondidas
-- Elementos de Acción con Responsables
-
-Ejemplo:
-
-**Revisión (30/06/2020):**
+**Revisión (01/04/2026):**
 
 **Asistentes:**
 
-- Equipo de Ingeniería de Datos
-- Equipo de Operaciones de Seguridad
+- Todo el equipo
 
 **Comentarios:**
 
-• Todos los asistentes están de acuerdo con la opción técnica 1.
-• X tiene una preocupación de que Y; nos aseguraremos de Z.
+• Todos los asistentes están de acuerdo con la determinacion del tema y el inicio del proyecto.
+• Distribucion de Roles para el desarrollo del Proyecto.
+• Construccion de las Herramientas base para el proyecto (Github, projects)
 
 Acciones:
-• nombre@: Cambiar los desgloses de trabajo basados en el alcance del proyecto recién actualizado.
+• Asignaciones Base para fundamentacion Tecnica del Sistema Jose Daza y Jorge Chavez.
+• Asignaciones Base para Diseño Tecnico del Proyecto Javier Alcoba y  Moises Navajas
+• Asignaciones Base para fundamentar el pipeline de github actions para el entorno completo. Mauricio Gordillo
+
+
+
+
+**Revisión (02/04/2026):**
+
+**Asistentes:**
+
+- Todo el equipo
+
+**Comentarios:**
+
+• Todos los asistentes están de acuerdo con la investiagacion de algunos puntos de desarrollo.
+• Aclaracion de puntos y determinacion del diseño tecnico.
+
+Acciones:
+• Demostracion basica del avance de la implementacion de Smithy Jose Daza y Jorge Chavez.
+• Demostracion del avance con Analisis de Requerimientos, Resumen, Supuestos, Logica de datos Javier Alcoba y  Moises Navajas
+• Avance de la investigacion pipeline de github actions para el entorno completo. Mauricio Gordillo
+
+
+
+
+
 
 *--- FIN DE LA SECCIÓN A ELIMINAR ---*
