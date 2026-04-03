@@ -453,8 +453,6 @@ erDiagram
     CHIRP_TABLE ||--o{ COMMENT : contiene
     CHIRP_TABLE ||--o{ FOLLOW : contiene
     CHIRP_TABLE ||--o{ LIKE : contiene
-
-
 ```
 
 
