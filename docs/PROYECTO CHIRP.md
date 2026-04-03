@@ -3,13 +3,42 @@
 ## Resumen
 Chirp es una plataforma de microblogging social en tiempo real (similar a X/Twitter). Permite a los usuarios crear chirps (mensajes de máximo 280 caracteres), seguir a otros usuarios, ver un timeline personalizado, dar like y comentar. El objetivo es ofrecer una experiencia de engagement instantáneo con alta disponibilidad y escalabilidad en la nube.
 ## Supuestos
-- Todos los usuarios tienen acceso a internet y un navegador moderno.
-- El sistema se desplegará en AWS (o equivalente cloud).
-- Se utilizará un proveedor de identidad externo para OIDC/SSO.
+- Usuarios Activos Diarios (DAU): 500 DAU (escenario objetivo para esta fase).
+- Cada usuario realiza en promedio 15–20 acciones por día (lectura de timeline, creación de chirps, likes, comentarios y follows).
+- Relación lecturas : escrituras ≈ 40:1 (los usuarios leen mucho más de lo que publican).
+- El sistema se ejecutará principalmente en entorno local durante el desarrollo y en AWS Free Tier o instancias pequeñas para pruebas.
+- Pico de tráfico simulado: hasta 100 usuarios concurrentes.
+- Tamaño promedio de un chirp: 400 bytes (texto) + 150 KB por imagen (solo el 10–15% de los chirps incluyen media).
 
-## Alcance y Fases
-Fase 1 (esta entrega):** CRUD de usuarios, chirps, follows, likes y comentarios + AuthN/AuthZ completa.
-Fuera del alcance (Fase 2/3): Notificaciones push, búsqueda avanzada con Elasticsearch, trending topics.
+## Alcance y Limites
+Esta primera fase del proyecto Chirp se centra en construir un MVP (Minimum Viable Product) funcional en un entorno de desarrollo y pruebas. El objetivo principal es implementar el núcleo del sistema de microblogging con autenticación completa, cumpliendo con los requisitos funcionales y no funcionales definidos.
+
+alcance de esta fase:
+
+Implementación completa de Autenticación (AuthN) y Autorización (AuthZ) utilizando OIDC/SSO (con Keycloak o Auth0).
+CRUD completo de usuarios (registro, perfil público y edición del propio perfil).
+Creación, lectura, eliminación de chirps (publicaciones de máximo 280 caracteres, con soporte opcional para imágenes).
+Sistema de follows (seguir y dejar de seguir usuarios).
+Interacciones básicas con chirps: likes
+Despliegue del backend en entorno de desarrollo (local o AWS Free Tier / instancia pequeña).
+
+Limites de esta fase:
+Las siguientes funcionalidades quedan explícitamente fuera del alcance de esta entrega (Fase 1), ya que requieren mayor complejidad, tiempo o infraestructura de producción:
+
+Notificaciones en tiempo real (push notifications o WebSockets).
+Búsqueda avanzada de chirps o usuarios (full-text search).
+Trending topics o recomendaciones algorítmicas.
+Sistema de moderación de contenido (reportes, ban de usuarios, IA).
+Soporte completo para imágenes/videos (almacenamiento en S3 + CDN).
+Reposts / retweets con quote.
+Analíticas y métricas de engagement por usuario.
+Escalabilidad horizontal real a miles de usuarios concurrentes.
+Despliegue en múltiples regiones o alta disponibilidad de producción.
+Features de monetización o verificación de cuentas.
+
+Nota importante:
+Todas las estimaciones de capacidad, latencia y escalabilidad en este documento se refieren a un entorno de desarrollo y pruebas, simulando hasta 1.000 DAU y 100 usuarios concurrentes. No se pretende alcanzar métricas de producción (99.9% uptime real, millones de usuarios, etc.).
+
 
 ## 1. Requerimientos *(~5 minutos)*
 
@@ -69,8 +98,41 @@ Contextualización: Esto previene ataques de denegación de servicio (DDoS) a ni
 
 ### 1.3 Estimación de Capacidad
 
+Las estimaciones de capacidad se realizan considerando un entorno de desarrollo y pruebas, con un universo objetivo de 500 usuarios activos diarios (DAU). Estos cálculos ayudan a dimensionar los recursos necesarios durante el desarrollo y las pruebas simuladas, sin asumir carga de producción.
 
+Cálculos de Tráfico (QPS)
+Para 500 DAU:
 
+Escrituras por día:
+500 usuarios × 2 acciones de escritura (chirps, likes, comentarios) ≈ 1.000 escrituras/día
+→ QPS promedio de escritura ≈ 1.000 / 86.400 ≈ 0,012 QPS
+Pico simulado: ≈ 0,05 QPS
+Lecturas por día (principalmente carga de timeline):
+500 usuarios × 18 lecturas ≈ 9.000 lecturas/día
+→ QPS promedio de lectura ≈ 9.000 / 86.400 ≈ 0,104 QPS
+Pico simulado durante pruebas: hasta 1 QPS (con 100 usuarios concurrentes).
+
+Almacenamiento Requerido (primer mes)
+
+Chirps de texto: 1.000 chirps/día × 400 bytes ≈ 0,4 MB/día → ≈ 12 MB/mes.
+Imágenes/media: 150 imágenes/día × 150 KB ≈ 22,5 MB/día → ≈ 675 MB/mes.
+Tablas auxiliares (Users, Follows, Likes, Comments): < 200 MB en el primer mes.
+Total estimado primer mes: ≈ 900 MB – 1,1 GB.
+
+Ancho de Banda de Red
+
+Tráfico estimado en pico durante pruebas: < 500 KB/s.
+Transferencia de datos mensual total: < 5–8 GB (fácilmente cubierto por el Free Tier de AWS).
+
+Impacto en el Diseño
+Estas estimaciones bajas de QPS y almacenamiento confirman que, en un entorno de desarrollo con 500 DAU simulados:
+
+DynamoDB en modo on-demand es más que suficiente y simplifica la gestión.
+No se necesita sharding ni configuraciones complejas de escalabilidad.
+El principal cuello de botella será la generación del timeline personalizado, por lo que se implementará un caché simple (Redis local o caché en memoria) para mantener buena latencia.
+Las pruebas de carga se realizarán simulando 100 usuarios concurrentes con herramientas como Locust o JMeter, para validar que la latencia se mantenga por debajo de 800 ms (p95) en las operaciones críticas (carga de timeline y creación de chirp).
+
+Todas las métricas y pruebas de esta sección corresponden exclusivamente a un entorno controlado de desarrollo y pruebas, no a un despliegue en producción.
 ## 2. Entidades Principales *(~2 minutos)*
 
 Las entidades principales representan los recursos centrales que el sistema debe gestionar, persistir y exponer a través de la API. Estas entidades se derivan directamente de los requisitos funcionales y forman la base del modelo de datos y del diseño de la API REST con Smithy.
