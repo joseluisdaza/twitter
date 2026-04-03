@@ -431,21 +431,21 @@ erDiagram
     USER ||--o| LIKE : da_like
 ```
 
-### Esquema Logico de la Tabla, Modelo de Datos DYNAMODB
+## Esquema Logico de la Tabla, Modelo de Datos DYNAMODB
 ```mermaid
 erDiagram
     CHIRP_TABLE {
-        String PK "Partition Key"
-        String SK "Sort Key"
-        String entityType
-        String username
-        String email
-        String bio
-        String avatarUrl
-        String content
-        String mediaUrls
-        Integer likesCount
-        Timestamp createdAt
+        string PK
+        string SK
+        string entityType
+        string username
+        string email
+        string bio
+        string avatarUrl
+        string content
+        string mediaUrls
+        int likesCount
+        timestamp createdAt
     }
 
     CHIRP_TABLE ||--o{ USER : contiene
@@ -453,6 +453,7 @@ erDiagram
     CHIRP_TABLE ||--o{ COMMENT : contiene
     CHIRP_TABLE ||--o{ FOLLOW : contiene
     CHIRP_TABLE ||--o{ LIKE : contiene
+
 
 ```
 
