@@ -1,7 +1,8 @@
 # PROYECTO CHIRP - Diseño Técnico
 **ESTADO DEL DOCUMENTO:** EN REVISION
 ## Resumen
-Chirp es una plataforma de microblogging social en tiempo real (similar a X/Twitter). Permite a los usuarios crear chirps (mensajes de máximo 280 caracteres), seguir a otros usuarios, ver un timeline personalizado, dar like y comentar. El objetivo es ofrecer una experiencia de engagement instantáneo con alta disponibilidad y escalabilidad en la nube.
+Chirp es una plataforma de microblogueo social en tiempo real, similar a otras redes de mensajes cortos. Permite a los usuarios crear chirps (publicaciones de hasta 280 caracteres), seguir a otros perfiles, visualizar un cronograma personalizado, dar “me gusta” y comentar. El objetivo principal es ofrecer una experiencia de interacción instantánea, con alta disponibilidad y capacidad de crecimiento en la nube.  
+
 ## Supuestos
 - Todos los usuarios tienen acceso a internet y un navegador moderno.
 - El sistema se desplegará en AWS (o equivalente cloud).
