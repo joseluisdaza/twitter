@@ -391,21 +391,6 @@ graph TD
     SocialService -->|Actualiza pivotes| DB
 ```
 
-### Temporización
-
-*--- ELIMINAR ESTA SECCIÓN ---*
-
-*Si está realizando cambios en los flujos de llamadas donde la latencia es crítica y puede verse afectada, explique los impactos de latencia de sus cambios. De lo contrario, elimine esta sección. Los diagramas de temporización son una forma conveniente de describir la latencia en múltiples pasos.*
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
-Ejemplo (PlantUML):
-
-Fuente del Diagrama
-
-_El diagrama de temporización de ejemplo va aquí._
-
----
 
 ## 6. Inmersiones Profundas *(~10 minutos)*
 
