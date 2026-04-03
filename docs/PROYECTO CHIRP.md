@@ -15,7 +15,8 @@ Fuera del alcance (Fase 2/3): Notificaciones push, búsqueda avanzada con Elasti
 
 ### 1.1 Requerimientos Funcionales
 
-RF1: Creación de Publicaciones (Prioridad Alta)
+RF1: Creación de Publicaciones (Prioridad Alta)  
+
 Descripción del requerimiento: El núcleo de escritura del sistema. Permite la inserción de nuevos registros de texto corto en la base de datos, reflejándose inmediatamente en el perfil del autor.
 Historia de Usuario (HU-01):
 Actor: Como usuario autenticado...
