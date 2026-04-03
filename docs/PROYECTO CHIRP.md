@@ -69,29 +69,7 @@ Contextualización: Esto previene ataques de denegación de servicio (DDoS) a ni
 
 ### 1.3 Estimación de Capacidad
 
-*--- ELIMINAR ESTA SECCIÓN ---*
 
-*Realice estimaciones de capacidad únicamente si influirán directamente en su diseño. En la mayoría de los escenarios, está tratando con un sistema distribuido a gran escala y es razonable asumirlo. Reserve los cálculos para cuando la decisión de diseño dependa realmente de los números.*
-
-*Si necesita estimar, considere:*
-
-- *Usuarios Activos Diarios (DAU)*
-- *Consultas por Segundo (QPS) — lectura y escritura*
-- *Almacenamiento requerido*
-- *Ancho de banda de red*
-
-*Ejemplo de cálculo de tráfico:*
-
-```text
-10 TPS * 50 MB = 500 MB por Segundo
-60 s/min  * 500 MB/s  = 30 GB por Minuto
-60 min/h  * 30 GB/min = 1.8 TB por Hora
-24 h/día  * 1.8 TB/h  = 43.2 TB por Día
-```
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
-
----
 
 ## 2. Entidades Principales *(~2 minutos)*
 
@@ -161,55 +139,37 @@ A continuación se detalla cada entidad con sus campos principales relevantes pa
 
 ## 3. API o Interfaz del Sistema *(~5 minutos)*
 
-*--- ELIMINAR ESTA SECCIÓN ---*
+El sistema expone una API RESTful versionada como protocolo principal de comunicación con los clientes (web y móvil). Se eligió REST por su simplicidad, amplia adopción y facilidad para mapear operaciones CRUD sobre los recursos principales del sistema.
 
-*Defina el contrato entre su sistema y sus usuarios antes de entrar en el diseño de alto nivel. Este contrato guiará el diseño y asegurará que se cumplan los requisitos identificados.*
+Recurso Users
+| Operación         | Método | Endpoint             | Descripción                              | Request Body                             | Response                    | Códigos HTTP posibles |
+| ----------------- | ------ | -------------------- | ---------------------------------------- | ---------------------------------------- | --------------------------- | --------------------- |
+| Crear usuario     | POST   | /v1/users            | Registro de nuevo usuario                | `{ username, email, displayName, bio? }` | `{ userId, username, ... }` | 201, 400, 409         |
+| Obtener perfil    | GET    | /v1/users/{username} | Obtener información pública de un perfil | -                                        | User Profile                | 200, 404              |
+| Actualizar perfil | PUT    | /v1/users/me         | Actualizar datos del usuario autenticado | `{ displayName, bio, avatarUrl? }`       | User Profile actualizado    | 200, 400, 401         |
 
-*Elija el protocolo de API adecuado:*
+Recurso Chirp
+| Operación                      | Método | Endpoint             | Descripción                             | Request Body               | Response                         | Códigos HTTP posibles |
+| ------------------------------ | ------ | -------------------- | --------------------------------------- | -------------------------- | -------------------------------- | --------------------- |
+| Crear chirp                    | POST   | /v1/chirps           | Publicar un nuevo chirp                 | `{ content, mediaUrls? }`  | `{ chirpId, ... }`               | 201, 400, 401         |
+| Obtener chirp                  | GET    | /v1/chirps/{chirpId} | Obtener un chirp específico             | -                          | Chirp detallado                  | 200, 404              |
+| Eliminar chirp                 | DELETE | /v1/chirps/{chirpId} | Eliminar chirp propio                   | -                          | -                                | 204, 403, 404         |
+| Obtener timeline personalizado | GET    | /v1/timeline         | Timeline de chirps de usuarios seguidos | `?limit=20&before=chirpId` | `{ chirps: [...], nextCursor? }` | 200, 401              |
 
-- *REST (Transferencia de Estado Representacional): Usa verbos HTTP (GET, POST, PUT, DELETE) para operaciones CRUD sobre recursos. Debe ser su elección predeterminada para la mayoría de los casos.*
-- *GraphQL: Permite a los clientes especificar exactamente qué datos necesitan, evitando sobre-obtención. Elija esto cuando tenga clientes diversos con diferentes necesidades de datos.*
-- *RPC (Llamada a Procedimiento Remoto, e.g. gRPC): Protocolo orientado a acciones, más rápido que REST para comunicación servicio a servicio. Use para APIs internas donde el rendimiento es crítico.*
 
-*Para características en tiempo real, también necesitará WebSockets o Server-Sent Events, pero diseñe primero su API principal.*
+Recurso Like
+| Operación   | Método | Endpoint                  | Descripción             | Request Body | Response | Códigos HTTP posibles |
+| ----------- | ------ | ------------------------- | ----------------------- | ------------ | -------- | --------------------- |
+| Dar like    | POST   | /v1/chirps/{chirpId}/like | Dar like a un chirp     | -            | -        | 201, 400, 404         |
+| Quitar like | DELETE | /v1/chirps/{chirpId}/like | Quitar like de un chirp | -            | -        | 204, 404              |
 
-*Nunca confíe en información sensible como IDs de usuario en los cuerpos de solicitud cuando deben provenir del token de autenticación. Siempre autentique las solicitudes y derive el usuario actual del token, no de la entrada del usuario.*
 
-*Para cada API nueva o actualizada, incluya:*
+Recurso Follow
+| Operación       | Método | Endpoint                 | Descripción                  | Request Body     | Response | Códigos HTTP posibles |
+| --------------- | ------ | ------------------------ | ---------------------------- | ---------------- | -------- | --------------------- |
+| Seguir usuario  | POST   | /v1/follows              | Seguir a otro usuario        | `{ followedId }` | -        | 201, 400, 404         |
+| Dejar de seguir | DELETE | /v1/follows/{followedId} | Dejar de seguir a un usuario | -                | -        | 204, 404              |
 
-- *Nombre(s) de Operación*
-- *Parámetro(s) de Solicitud / Entrada*
-- *Parámetro(s) de Respuesta / Salida*
-- *Excepción(es) y sus códigos de estado HTTP*
-- *Estructura de cualquier Tipo de Dato(s) Complejo(s)*
-- *Restricciones en Parámetros Opcionales/Requeridos*
-
-*Asegúrese de abordar las preocupaciones de validación de datos para prevenir ataques de inyección SQL o de scripts (por ejemplo, no se permiten caracteres `;`, todas las cadenas escapadas para etiquetas HTML).*
-
-*Tipos de APIs afectadas:*
-
-- *APIs Públicas*
-- *APIs Internas*
-
-*Ejemplo (REST):*
-
-```
-POST /v1/recursos
-body: {
-  "campo": string
-}
-
-GET /v1/recursos/{recursoId} -> Recurso
-
-PUT /v1/recursos/{recursoId}
-body: {
-  "campo": string
-}
-
-DELETE /v1/recursos/{recursoId}
-```
-
-*--- FIN DE LA SECCIÓN A ELIMINAR ---*
 
 ---
 
