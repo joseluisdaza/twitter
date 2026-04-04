@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { RemovalPolicy } from 'aws-cdk-lib/core';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 
 export class InfrastructureStack extends cdk.Stack {
   // Propiedades públicas para acceder a las tablas desde otros stacks si es necesario
@@ -247,6 +248,142 @@ export class InfrastructureStack extends cdk.Stack {
       value: this.commentsTable.tableName,
       description: 'Nombre de la tabla de comments',
       exportName: 'ChirpCommentsTableName',
+    });
+
+    // ========================================================================
+    // AWS COGNITO - USER POOL
+    // ========================================================================
+    // User Pool para autenticación de usuarios
+    const userPool = new cognito.UserPool(this, 'ChirpUserPool', {
+      userPoolName: 'chirp-user-pool',
+
+      // Login con email
+      signInAliases: {
+        email: true,
+        username: false,
+      },
+
+      // Atributos requeridos
+      standardAttributes: {
+        email: {
+          required: true,
+          mutable: false,
+        },
+        preferredUsername: {
+          required: true,
+          mutable: true,
+        },
+      },
+
+      // Atributos personalizados
+      customAttributes: {
+        displayName: new cognito.StringAttribute({
+          minLen: 1,
+          maxLen: 100,
+          mutable: true,
+        }),
+        bio: new cognito.StringAttribute({ minLen: 0, maxLen: 160, mutable: true }),
+      },
+
+      // Políticas de contraseña
+      passwordPolicy: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: false,
+      },
+
+      // Verificación de email
+      autoVerify: {
+        email: true,
+      },
+
+      // Configuración de email
+      email: cognito.UserPoolEmail.withCognito(),
+
+      // Retención de usuarios eliminados
+      removalPolicy: cdk.RemovalPolicy.RETAIN, // En producción: RETAIN
+
+      // MFA (opcional, para mayor seguridad)
+      mfa: cognito.Mfa.OPTIONAL,
+      mfaSecondFactor: {
+        sms: false,
+        otp: true, // Autenticador TOTP (Google Authenticator, etc.)
+      },
+    });
+
+    // ========================================================================
+    // USER POOL CLIENT
+    // ========================================================================
+    // Client para la aplicación web/móvil
+    const userPoolClient = userPool.addClient('ChirpWebClient', {
+      userPoolClientName: 'chirp-web-client',
+
+      // Flows de autenticación permitidos
+      authFlows: {
+        userPassword: true, // Usuario + contraseña
+        userSrp: true, // Secure Remote Password
+        custom: false,
+        adminUserPassword: false,
+      },
+
+      // OAuth flows
+      oAuth: {
+        flows: {
+          authorizationCodeGrant: true,
+          implicitCodeGrant: false,
+        },
+        scopes: [
+          cognito.OAuthScope.EMAIL,
+          cognito.OAuthScope.OPENID,
+          cognito.OAuthScope.PROFILE,
+        ],
+        callbackUrls: [
+          'http://localhost:3000/callback', // Desarrollo
+          'https://chirp.example.com/callback', // Producción
+        ],
+        logoutUrls: ['http://localhost:3000', 'https://chirp.example.com'],
+      },
+
+      // Configuración de tokens
+      accessTokenValidity: cdk.Duration.hours(1),
+      idTokenValidity: cdk.Duration.hours(1),
+      refreshTokenValidity: cdk.Duration.days(30),
+
+      // Prevenir secreto de cliente (mejor para SPAs)
+      generateSecret: false,
+    });
+
+    // ========================================================================
+    // USER POOL DOMAIN
+    // ========================================================================
+    // Dominio para Hosted UI (opcional pero útil)
+    const userPoolDomain = userPool.addDomain('ChirpUserPoolDomain', {
+      cognitoDomain: {
+        domainPrefix: 'chirp-auth-dev', // Debe ser único en AWS
+      },
+    });
+
+    // ========================================================================
+    // OUTPUTS - Cognito
+    // ========================================================================
+    new cdk.CfnOutput(this, 'UserPoolId', {
+      value: userPool.userPoolId,
+      description: 'ID del User Pool de Cognito',
+      exportName: 'ChirpUserPoolId',
+    });
+
+    new cdk.CfnOutput(this, 'UserPoolClientId', {
+      value: userPoolClient.userPoolClientId,
+      description: 'ID del Client del User Pool',
+      exportName: 'ChirpUserPoolClientId',
+    });
+
+    new cdk.CfnOutput(this, 'UserPoolDomainUrl', {
+      value: `https://${userPoolDomain.domainName}.auth.${this.region}.amazoncognito.com`,
+      description: 'URL del dominio de autenticación',
+      exportName: 'ChirpUserPoolDomainUrl',
     });
   }
 }
