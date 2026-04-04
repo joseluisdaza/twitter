@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "sources": [
+    "model"
+  ],
+  "plugins": {
+    "build-info": {
+      "version": "1.0.0",
+      "sdkId": "Chirp"
+    }
+  }
+}
