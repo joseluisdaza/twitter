@@ -1,26 +1,29 @@
 $version: "2"
 
-namespace com.chirp.api
+namespace com.chirp
 
 use aws.protocols#restJson1
-use com.chirp.auth#Login
-use com.chirp.auth#Logout
-use com.chirp.chirps#CreateChirp
-use com.chirp.chirps#HideChirp
-use com.chirp.chirps#LikeChirp
-use com.chirp.chirps#UnlikeChirp
 
 /// Servicio principal de la API de Chirp
-@restJson1
 @title("Chirp API")
+@restJson1
+@httpBearerAuth
+@paginated(inputToken: "nextToken", outputToken: "nextToken", pageSize: "pageSize")
 service ChirpService {
     version: "2026-04-04"
+    resources: [
+        UserResource
+        ChirpResource
+    ]
     operations: [
         Login
         Logout
-        CreateChirp
-        LikeChirp
-        UnlikeChirp
-        HideChirp
+        ListFollowers
+        ListFollowing
+    ]
+    errors: [
+        UnauthorizedError
+        ForbiddenError
+        InternalServerError
     ]
 }

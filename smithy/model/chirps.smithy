@@ -1,167 +1,153 @@
 $version: "2"
 
-namespace com.chirp.chirps
+namespace com.chirp
 
-use com.chirp.common#ChirpContent
-use com.chirp.common#DateTime
-use com.chirp.common#ForbiddenError
-use com.chirp.common#InternalServerError
-use com.chirp.common#NotFoundError
-use com.chirp.common#UUID
-use com.chirp.common#UnauthorizedError
-use com.chirp.common#Username
-use com.chirp.common#ValidationError
-
-/// ============================================================================
-/// CREAR CHIRP
-/// ============================================================================
-/// Operación para crear un chirp
-@http(method: "POST", uri: "/chirps")
-operation CreateChirp {
-    input: CreateChirpInput
-    output: CreateChirpOutput
-    errors: [
-        ValidationError
-        UnauthorizedError
-        InternalServerError
+resource ChirpResource {
+    identifiers: { chirpId: ChirpId }
+    create: CreateChirp
+    read: GetChirp
+    delete: DeleteChirp
+    list: ListChirps
+    resources: [
+        LikeResource
+        CommentResource
     ]
 }
 
-structure CreateChirpInput {
-    @required
-    content: ChirpContent
+// ─── Tipos de Chirp ───────────────────────────────────────────────────────────
+/// Contenido de un chirp (1–280 caracteres)
+@length(min: 1, max: 280)
+string ChirpContent
 
-    /// URLs de imágenes/videos (opcional)
-    mediaUrls: MediaUrlList
-}
-
-structure CreateChirpOutput {
-    @required
-    chirp: Chirp
-}
-
-/// ============================================================================
-/// DAR LIKE
-/// ============================================================================
-@http(method: "POST", uri: "/chirps/{chirpId}/like")
-operation LikeChirp {
-    input: LikeChirpInput
-    output: LikeChirpOutput
-    errors: [
-        ValidationError
-        NotFoundError
-        UnauthorizedError
-        InternalServerError
-    ]
-}
-
-structure LikeChirpInput {
-    @required
-    @httpLabel
-    chirpId: UUID
-}
-
-structure LikeChirpOutput {
-    @required
-    message: String = "Like added successfully"
-
-    @required
-    chirp: Chirp
-}
-
-/// ============================================================================
-/// QUITAR LIKE
-/// ============================================================================
-@http(method: "DELETE", uri: "/chirps/{chirpId}/like")
-@idempotent
-operation UnlikeChirp {
-    input: UnlikeChirpInput
-    output: UnlikeChirpOutput
-    errors: [
-        NotFoundError
-        UnauthorizedError
-        InternalServerError
-    ]
-}
-
-structure UnlikeChirpInput {
-    @required
-    @httpLabel
-    chirpId: UUID
-}
-
-structure UnlikeChirpOutput {
-    @required
-    message: String = "Like removed successfully"
-
-    @required
-    chirp: Chirp
-}
-
-/// ============================================================================
-/// OCULTAR CHIRP
-/// ============================================================================
-@http(method: "POST", uri: "/chirps/{chirpId}/hide")
-operation HideChirp {
-    input: HideChirpInput
-    output: HideChirpOutput
-    errors: [
-        NotFoundError
-        UnauthorizedError
-        ForbiddenError
-        InternalServerError
-    ]
-}
-
-structure HideChirpInput {
-    @required
-    @httpLabel
-    chirpId: UUID
-}
-
-structure HideChirpOutput {
-    @required
-    message: String = "Chirp hidden successfully"
-
-    @required
-    chirp: Chirp
-}
-
-/// ============================================================================
-/// ESTRUCTURAS DE DATOS
-/// ============================================================================
 /// Estructura principal de un Chirp
 structure Chirp {
     @required
-    chirpId: UUID
+    chirpId: ChirpId
 
     @required
-    userId: UUID
-
-    @required
-    username: Username
+    userId: UserId
 
     @required
     content: ChirpContent
 
     mediaUrls: MediaUrlList
-
-    @required
-    createdAt: DateTime
 
     @required
     likesCount: Integer
 
     @required
-    commentsCount: Integer
-
-    @required
     repostsCount: Integer
 
+    /// Referencia al chirp padre (para reposts/replies)
+    parentChirpId: ChirpId
+
     @required
-    hidden: Boolean = false
+    createdAt: Timestamp
 }
 
-list MediaUrlList {
-    member: String
+list ChirpList {
+    member: Chirp
+}
+
+// ─── CreateChirp ──────────────────────────────────────────────────────────────
+@http(method: "POST", uri: "/v1/chirps", code: 201)
+operation CreateChirp {
+    input: CreateChirpInput
+    output: CreateChirpOutput
+    errors: [
+        BadRequestError
+    ]
+}
+
+@input
+structure CreateChirpInput {
+    @required
+    content: ChirpContent
+
+    mediaUrls: MediaUrlList
+
+    /// Para reposts o replies
+    parentChirpId: ChirpId
+}
+
+@output
+structure CreateChirpOutput {
+    @required
+    @httpPayload
+    chirp: Chirp
+}
+
+// ─── GetChirp ─────────────────────────────────────────────────────────────────
+@readonly
+@http(method: "GET", uri: "/v1/chirps/{chirpId}", code: 200)
+operation GetChirp {
+    input: GetChirpInput
+    output: GetChirpOutput
+    errors: [
+        NotFoundError
+    ]
+}
+
+@input
+structure GetChirpInput {
+    @required
+    @httpLabel
+    chirpId: ChirpId
+}
+
+@output
+structure GetChirpOutput {
+    @required
+    @httpPayload
+    chirp: Chirp
+}
+
+// ─── DeleteChirp ──────────────────────────────────────────────────────────────
+@idempotent
+@http(method: "DELETE", uri: "/v1/chirps/{chirpId}", code: 204)
+operation DeleteChirp {
+    input: DeleteChirpInput
+    output: DeleteChirpOutput
+    errors: [
+        NotFoundError
+        ForbiddenError
+    ]
+}
+
+@input
+structure DeleteChirpInput {
+    @required
+    @httpLabel
+    chirpId: ChirpId
+}
+
+@output
+structure DeleteChirpOutput {}
+
+// ─── ListChirps ───────────────────────────────────────────────────────────────
+@readonly
+@http(method: "GET", uri: "/v1/chirps", code: 200)
+operation ListChirps {
+    input: ListChirpsInput
+    output: ListChirpsOutput
+}
+
+@input
+structure ListChirpsInput {
+    @httpQuery("userId")
+    userId: UserId
+
+    @httpQuery("pageSize")
+    pageSize: PageSize
+
+    @httpQuery("nextToken")
+    nextToken: NextToken
+}
+
+@output
+structure ListChirpsOutput {
+    @required
+    chirps: ChirpList
+
+    nextToken: NextToken
 }

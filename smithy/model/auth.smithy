@@ -1,28 +1,20 @@
 $version: "2"
 
-namespace com.chirp.auth
+namespace com.chirp
 
-use com.chirp.common#Email
-use com.chirp.common#InternalServerError
-use com.chirp.common#UnauthorizedError
-use com.chirp.common#ValidationError
-
-/// ============================================================================
-/// LOGIN
-/// ============================================================================
-/// Operación de login
-@http(method: "POST", uri: "/auth/login")
+// ─── Login ────────────────────────────────────────────────────────────────────
+/// Autenticación de usuario con email y contraseña
+@http(method: "POST", uri: "/v1/auth/login", code: 200)
 operation Login {
     input: LoginInput
     output: LoginOutput
     errors: [
-        ValidationError
+        BadRequestError
         UnauthorizedError
-        InternalServerError
     ]
 }
 
-/// Input para login
+@input
 structure LoginInput {
     @required
     email: Email
@@ -32,7 +24,7 @@ structure LoginInput {
     password: String
 }
 
-/// Output de login exitoso
+@output
 structure LoginOutput {
     @required
     accessToken: String
@@ -47,28 +39,25 @@ structure LoginOutput {
     expiresIn: Integer
 
     @required
-    tokenType: String = "Bearer"
+    tokenType: String
 }
 
-/// ============================================================================
-/// LOGOUT
-/// ============================================================================
-/// Operación de logout
-@http(method: "POST", uri: "/auth/logout")
+// ─── Logout ───────────────────────────────────────────────────────────────────
+/// Cierre de sesión del usuario autenticado
+@http(method: "POST", uri: "/v1/auth/logout", code: 200)
 operation Logout {
     input: LogoutInput
     output: LogoutOutput
     errors: [
         UnauthorizedError
-        InternalServerError
     ]
 }
 
-/// Input para logout
+@input
 structure LogoutInput {}
 
-/// Output de logout
+@output
 structure LogoutOutput {
     @required
-    message: String = "Logged out successfully"
+    message: String
 }

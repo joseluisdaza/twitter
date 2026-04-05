@@ -7,6 +7,10 @@
     "build-info": {
       "version": "1.0.0",
       "sdkId": "Chirp"
+    },
+    "openapi": {
+      "service": "com.chirp#ChirpService",
+      "version": "3.0.2"
     }
   }
 }

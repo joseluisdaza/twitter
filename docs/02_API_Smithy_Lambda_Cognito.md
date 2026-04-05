@@ -1,8 +1,8 @@
 # 🔐 API con Smithy + Lambda + Cognito - Proyecto Chirp
 
-**Estado:** 🚧 En Progreso  
-**Fase Actual:** Fase 1 - Configuración de Smithy  
-**Última actualización:** Abril 4, 2026
+**Estado:** 🚧 En Progreso
+**Fase Actual:** Fase 3 - AWS Cognito
+**Última actualización:** Abril 5, 2026
 
 ---
 
@@ -24,16 +24,39 @@
 
 ## Introducción
 
-Vamos a implementar estos **5 endpoints**:
+La API de Chirp expone **14 endpoints** organizados por dominio. Todos los endpoints (excepto Login) requieren autenticación JWT via `Bearer` token.
 
-| Endpoint            | Método | Descripción             | Autenticación         |
-| ------------------- | ------ | ----------------------- | --------------------- |
-| `/auth/login`       | POST   | Iniciar sesión          | ❌ No (público)       |
-| `/auth/logout`      | POST   | Cerrar sesión           | ✅ Sí                 |
-| `/chirps`           | POST   | Crear un chirp          | ✅ Sí                 |
-| `/chirps/{id}/like` | POST   | Dar like a un chirp     | ✅ Sí                 |
-| `/chirps/{id}/like` | DELETE | Quitar like de un chirp | ✅ Sí                 |
-| `/chirps/{id}/hide` | POST   | Ocultar un chirp        | ✅ Sí (solo el autor) |
+### 🔐 Autenticación
+| Endpoint                | Método | Descripción        | Auth            |
+| ----------------------- | ------ | ------------------ | --------------- |
+| `/v1/auth/login`        | POST   | Iniciar sesión     | ❌ No (público) |
+| `/v1/auth/logout`       | POST   | Cerrar sesión      | ✅ Sí           |
+
+### 🐦 Chirps
+| Endpoint                    | Método | Descripción              | Auth |
+| --------------------------- | ------ | ------------------------ | ---- |
+| `/v1/chirps`                | POST   | Crear un chirp           | ✅   |
+| `/v1/chirps`                | GET    | Listar chirps (paginado) | ✅   |
+| `/v1/chirps/{chirpId}`      | GET    | Obtener un chirp         | ✅   |
+| `/v1/chirps/{chirpId}`      | DELETE | Eliminar un chirp        | ✅   |
+| `/v1/chirps/{chirpId}/likes`| POST   | Dar like a un chirp      | ✅   |
+| `/v1/chirps/{chirpId}/likes`| DELETE | Quitar like de un chirp  | ✅   |
+
+### 💬 Comentarios
+| Endpoint                                           | Método | Descripción               | Auth |
+| -------------------------------------------------- | ------ | ------------------------- | ---- |
+| `/v1/chirps/{chirpId}/comments`                    | POST   | Crear comentario          | ✅   |
+| `/v1/chirps/{chirpId}/comments`                    | GET    | Listar comentarios        | ✅   |
+| `/v1/chirps/{chirpId}/comments/{commentId}`        | DELETE | Eliminar comentario       | ✅   |
+
+### 👥 Usuarios y Follows
+| Endpoint                             | Método | Descripción               | Auth |
+| ------------------------------------ | ------ | ------------------------- | ---- |
+| `/v1/users/{userId}`                 | GET    | Obtener perfil de usuario | ✅   |
+| `/v1/users/{userId}/follows`         | POST   | Seguir a un usuario       | ✅   |
+| `/v1/users/{userId}/follows/{id}`    | DELETE | Dejar de seguir           | ✅   |
+| `/v1/users/{userId}/followers`       | GET    | Listar seguidores         | ✅   |
+| `/v1/users/{userId}/following`       | GET    | Listar seguidos           | ✅   |
 
 ---
 
@@ -81,18 +104,22 @@ flowchart TB
         end
 
         subgraph "Lambda Functions"
-            L1[⚡ LoginFunction<br/>POST /auth/login]
-            L2[⚡ LogoutFunction<br/>POST /auth/logout]
-            L3[⚡ CreateChirpFunction<br/>POST /chirps]
-            L4[⚡ LikeChirpFunction<br/>POST /chirps/:id/like]
-            L5[⚡ UnlikeChirpFunction<br/>DELETE /chirps/:id/like]
-            L6[⚡ HideChirpFunction<br/>POST /chirps/:id/hide]
+            L1[⚡ LoginFunction<br/>POST /v1/auth/login]
+            L2[⚡ LogoutFunction<br/>POST /v1/auth/logout]
+            L3[⚡ ChirpFunction<br/>POST·GET /v1/chirps]
+            L4[⚡ ChirpDetailFunction<br/>GET·DELETE /v1/chirps/id]
+            L5[⚡ LikeFunction<br/>POST·DELETE /v1/chirps/id/likes]
+            L6[⚡ CommentFunction<br/>POST·GET·DELETE /v1/chirps/id/comments]
+            L7[⚡ UserFunction<br/>GET /v1/users/id]
+            L8[⚡ FollowFunction<br/>POST·DELETE·GET /v1/users/id/follows]
         end
 
         subgraph "Base de Datos"
             DDB1[(DynamoDB<br/>chirp-users)]
             DDB2[(DynamoDB<br/>chirp-chirps)]
             DDB3[(DynamoDB<br/>chirp-likes)]
+            DDB4[(DynamoDB<br/>chirp-comments)]
+            DDB5[(DynamoDB<br/>chirp-follows)]
         end
     end
 
@@ -102,15 +129,20 @@ flowchart TB
 
     User -->|2. Request + JWT| APIGW
     APIGW -->|Valida JWT| Cognito
-    APIGW -->|Invoca| L3
-    APIGW -->|Invoca| L4
-    APIGW -->|Invoca| L5
-    APIGW -->|Invoca| L6
+    APIGW --> L2
+    APIGW --> L3
+    APIGW --> L4
+    APIGW --> L5
+    APIGW --> L6
+    APIGW --> L7
+    APIGW --> L8
 
     L3 --> DDB2
-    L4 --> DDB3
+    L4 --> DDB2
     L5 --> DDB3
-    L6 --> DDB2
+    L6 --> DDB4
+    L7 --> DDB1
+    L8 --> DDB5
 ```
 
 ---
@@ -122,10 +154,11 @@ flowchart TB
 - [x] Verificar Java instalado (JDK 11+)
 - [x] Instalar Gradle
 - [x] Crear estructura de proyecto Smithy
-- [x] Configurar build.gradle
-- [x] Configurar smithy-build.json
-- [x] Crear archivos de modelo Smithy
-- [x] Compilar y verificar (✅ BUILD SUCCESSFUL)
+- [x] Configurar build.gradle (con plugins openapi)
+- [x] Configurar smithy-build.json (con plugin openapi)
+- [x] Crear archivos de modelo Smithy (8 archivos)
+- [x] Configurar Swagger UI para visualización local
+- [x] Compilar y verificar (✅ BUILD SUCCESSFUL — 547 shapes)
 
 ---
 
@@ -165,20 +198,29 @@ mkdir -p gradle/wrapper
 
 ```
 smithy/
-├── model/                     # Modelos Smithy
-│   ├── main.smithy
-│   ├── auth.smithy
-│   ├── chirps.smithy
-│   └── common.smithy
+├── model/                          # Modelos Smithy (namespace: com.chirp)
+│   ├── main.smithy                 # Servicio principal + @httpBearerAuth
+│   ├── common.smithy               # Tipos e IDs compartidos + errores
+│   ├── auth.smithy                 # Login / Logout
+│   ├── chirps.smithy               # Chirps CRUD + paginación
+│   ├── users.smithy                # Perfil de usuario
+│   ├── likes.smithy                # Likes de chirps
+│   ├── comments.smithy             # Comentarios de chirps
+│   └── follows.smithy              # Follows entre usuarios
 ├── gradle/
-│   └── wrapper/               # Gradle wrapper (generado)
-├── build-output/              # Output del build (generado)
-├── build.gradle              # Configuración de Gradle
-├── settings.gradle           # Configuración del proyecto
-├── gradle.properties         # Propiedades de Gradle
-├── smithy-build.json         # Configuración de Smithy
-├── gradlew                   # Script de Gradle (Unix)
-└── gradlew.bat               # Script de Gradle (Windows)
+│   └── wrapper/                    # Gradle wrapper (generado)
+├── build/                          # Output del build (gitignored)
+│   └── smithyprojections/
+│       └── chirp-smithy/source/
+│           └── openapi/
+│               └── ChirpService.openapi.json  # Spec OpenAPI generado
+├── build.gradle                    # Configuración de Gradle
+├── settings.gradle                 # Configuración del proyecto
+├── gradle.properties               # Propiedades de Gradle
+├── smithy-build.json               # Configuración de Smithy + plugin openapi
+├── package.json                    # Script npm run swagger
+├── gradlew                         # Script de Gradle (Unix)
+└── gradlew.bat                     # Script de Gradle (Windows)
 ```
 
 ---
@@ -204,6 +246,9 @@ dependencies {
     implementation 'software.amazon.smithy:smithy-model:1.45.0'
     implementation 'software.amazon.smithy:smithy-aws-traits:1.45.0'
     implementation 'software.amazon.smithy:smithy-linters:1.45.0'
+    // Plugins para generar OpenAPI spec desde los modelos Smithy
+    implementation 'software.amazon.smithy:smithy-openapi:1.45.0'
+    implementation 'software.amazon.smithy:smithy-aws-apigateway-openapi:1.45.0'
 }
 ```
 
@@ -245,10 +290,16 @@ Este archivo configura cómo Smithy procesa los modelos.
     "build-info": {
       "version": "1.0.0",
       "sdkId": "Chirp"
+    },
+    "openapi": {
+      "service": "com.chirp#ChirpService",
+      "version": "3.0.2"
     }
   }
 }
 ```
+
+El plugin `openapi` genera el archivo `build/smithyprojections/chirp-smithy/source/openapi/ChirpService.openapi.json` que se usa para Swagger UI.
 
 ---
 
@@ -273,90 +324,86 @@ chmod +x gradlew
 
 ### 📋 Checklist Fase 2
 
-- [x] Crear archivo common.smithy (errores, estructuras base)
-- [x] Crear archivo auth.smithy (login, logout)
-- [x] Crear archivo chirps.smithy (crear, like, hide)
-- [x] Crear archivo main.smithy (servicio principal)
-- [x] Compilar y verificar (✅ 369 shapes validados)
+- [x] Crear `common.smithy` — tipos compartidos, IDs, errores
+- [x] Crear `auth.smithy` — Login / Logout
+- [x] Crear `chirps.smithy` — CRUD de chirps + recurso con sub-recursos
+- [x] Crear `users.smithy` — perfil de usuario
+- [x] Crear `likes.smithy` — likes de chirps
+- [x] Crear `comments.smithy` — comentarios de chirps
+- [x] Crear `follows.smithy` — follows entre usuarios
+- [x] Crear `main.smithy` — servicio principal con `@httpBearerAuth`
+- [x] Compilar y verificar (✅ **547 shapes** validados)
+- [x] Verificar Swagger UI con todos los endpoints
 
 ---
 
 ### Paso 2.1: Crear common.smithy
+
+Contiene todos los tipos e IDs compartidos y los errores HTTP estándar. **Todos los archivos usan el namespace `com.chirp`** — no se necesitan `use` statements entre archivos del mismo namespace.
 
 **Archivo:** `smithy/model/common.smithy`
 
 ```smithy
 $version: "2"
 
-namespace com.chirp.common
+namespace com.chirp
 
-/// Estructura base para errores de validación
-@error("client")
-structure ValidationError {
-    @required
-    message: String
+// ─── IDs ─────────────────────────────────────────────────────────────────────
 
-    /// Campo que falló la validación
-    field: String
-}
+/// UUID v4 de usuario
+@pattern("^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+string UserId
 
-/// Error cuando el recurso no se encuentra
-@error("client")
-@httpError(404)
-structure NotFoundError {
-    @required
-    message: String
+/// UUID v4 de chirp
+@pattern("^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+string ChirpId
 
-    @required
-    resourceType: String
+/// UUID v4 de comentario
+@pattern("^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+string CommentId
 
-    @required
-    resourceId: String
-}
+// ─── Tipos comunes ────────────────────────────────────────────────────────────
 
-/// Error de autenticación (no autenticado)
-@error("client")
-@httpError(401)
-structure UnauthorizedError {
-    @required
-    message: String
-}
+/// Timestamp ISO 8601 (ej: 2026-04-05T12:00:00Z)
+@pattern("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$")
+string Timestamp
 
-/// Error de autorización (autenticado pero sin permisos)
-@error("client")
-@httpError(403)
-structure ForbiddenError {
-    @required
-    message: String
-}
+/// URL de media (imagen o video)
+@length(min: 1, max: 2048)
+string MediaUrl
 
-/// Error interno del servidor
-@error("server")
-@httpError(500)
-structure InternalServerError {
-    @required
-    message: String
-}
+list MediaUrlList { member: MediaUrl }
 
-/// Timestamp en formato ISO 8601
-@timestampFormat("date-time")
-timestamp DateTime
+/// Token de paginación
+string NextToken
 
-/// UUID (formato: 550e8400-e29b-41d4-a716-446655440000)
-@pattern("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-string UUID
+/// Tamaño de página (1–100)
+@range(min: 1, max: 100)
+integer PageSize
 
 /// Email válido
 @pattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 string Email
 
-/// Contenido de un chirp (1-280 caracteres)
-@length(min: 1, max: 280)
-string ChirpContent
+// ─── Errores ─────────────────────────────────────────────────────────────────
 
-/// Username (3-30 caracteres alfanuméricos, guiones y underscore)
-@pattern("^[a-zA-Z0-9_-]{3,30}$")
-string Username
+@error("client") @httpError(400)
+structure BadRequestError { @required message: String }
+
+@error("client") @httpError(401)
+structure UnauthorizedError { @required message: String }
+
+@error("client") @httpError(403)
+structure ForbiddenError { @required message: String }
+
+@error("client") @httpError(404)
+structure NotFoundError { @required message: String }
+
+@error("client") @httpError(409)
+structure ConflictError { @required message: String }
+
+@error("server") @httpError(500)
+structure InternalServerError { @required message: String }
 ```
 
 ---
@@ -368,30 +415,19 @@ string Username
 ```smithy
 $version: "2"
 
-namespace com.chirp.auth
+namespace com.chirp
 
-use com.chirp.common#UnauthorizedError
-use com.chirp.common#ValidationError
-use com.chirp.common#InternalServerError
-use com.chirp.common#Email
+// ─── Login ────────────────────────────────────────────────────────────────────
 
-/// ============================================================================
-/// LOGIN
-/// ============================================================================
-
-/// Operación de login
-@http(method: "POST", uri: "/auth/login")
+/// Autenticación de usuario con email y contraseña
+@http(method: "POST", uri: "/v1/auth/login", code: 200)
 operation Login {
     input: LoginInput
     output: LoginOutput
-    errors: [
-        ValidationError
-        UnauthorizedError
-        InternalServerError
-    ]
+    errors: [BadRequestError, UnauthorizedError]
 }
 
-/// Input para login
+@input
 structure LoginInput {
     @required
     email: Email
@@ -401,297 +437,478 @@ structure LoginInput {
     password: String
 }
 
-/// Output de login exitoso
+@output
 structure LoginOutput {
-    @required
-    accessToken: String
-
-    @required
-    idToken: String
-
-    @required
-    refreshToken: String
-
-    @required
-    expiresIn: Integer
-
-    @required
-    tokenType: String = "Bearer"
+    @required accessToken: String
+    @required idToken: String
+    @required refreshToken: String
+    @required expiresIn: Integer
+    @required tokenType: String
 }
 
-/// ============================================================================
-/// LOGOUT
-/// ============================================================================
+// ─── Logout ───────────────────────────────────────────────────────────────────
 
-/// Operación de logout
-@http(method: "POST", uri: "/auth/logout")
+/// Cierre de sesión del usuario autenticado
+@http(method: "POST", uri: "/v1/auth/logout", code: 200)
 operation Logout {
     input: LogoutInput
     output: LogoutOutput
-    errors: [
-        UnauthorizedError
-        InternalServerError
-    ]
+    errors: [UnauthorizedError]
 }
 
-/// Input para logout
+@input
 structure LogoutInput {}
 
-/// Output de logout
+@output
 structure LogoutOutput {
-    @required
-    message: String = "Logged out successfully"
+    @required message: String
 }
 ```
 
-**Nota:** El logout no requiere input explícito porque el token JWT vendrá automáticamente en el header `Authorization` cuando implementemos el Cognito Authorizer en API Gateway.
+**Nota:** El token JWT viene en el header `Authorization: Bearer <token>`. El Cognito Authorizer en API Gateway lo validará automáticamente (Fase 5).
 
 ---
 
 ### Paso 2.3: Crear chirps.smithy
+
+Define el recurso `ChirpResource` con operaciones CRUD y sub-recursos de likes y comentarios.
 
 **Archivo:** `smithy/model/chirps.smithy`
 
 ```smithy
 $version: "2"
 
-namespace com.chirp.chirps
+namespace com.chirp
 
-use com.chirp.common#UUID
-use com.chirp.common#ChirpContent
-use com.chirp.common#Username
-use com.chirp.common#DateTime
-use com.chirp.common#ValidationError
-use com.chirp.common#NotFoundError
-use com.chirp.common#UnauthorizedError
-use com.chirp.common#ForbiddenError
-use com.chirp.common#InternalServerError
+resource ChirpResource {
+    identifiers: { chirpId: ChirpId }
+    create: CreateChirp
+    read: GetChirp
+    delete: DeleteChirp
+    list: ListChirps
+    resources: [LikeResource, CommentResource]
+}
 
-/// ============================================================================
-/// CREAR CHIRP
-/// ============================================================================
+@length(min: 1, max: 280)
+string ChirpContent
 
-/// Operación para crear un chirp
-@http(method: "POST", uri: "/chirps")
+structure Chirp {
+    @required chirpId: ChirpId
+    @required userId: UserId
+    @required content: ChirpContent
+    mediaUrls: MediaUrlList
+    @required likesCount: Integer
+    @required repostsCount: Integer
+    parentChirpId: ChirpId
+    @required createdAt: Timestamp
+}
+
+list ChirpList { member: Chirp }
+
+// CreateChirp — POST /v1/chirps
+@http(method: "POST", uri: "/v1/chirps", code: 201)
 operation CreateChirp {
     input: CreateChirpInput
     output: CreateChirpOutput
-    errors: [
-        ValidationError
-        UnauthorizedError
-        InternalServerError
-    ]
+    errors: [BadRequestError]
 }
-
+@input
 structure CreateChirpInput {
-    @required
-    content: ChirpContent
-
-    /// URLs de imágenes/videos (opcional)
+    @required content: ChirpContent
     mediaUrls: MediaUrlList
+    parentChirpId: ChirpId
 }
+@output
+structure CreateChirpOutput { @required @httpPayload chirp: Chirp }
 
-structure CreateChirpOutput {
-    @required
-    chirp: Chirp
+// GetChirp — GET /v1/chirps/{chirpId}
+@readonly
+@http(method: "GET", uri: "/v1/chirps/{chirpId}", code: 200)
+operation GetChirp {
+    input: GetChirpInput
+    output: GetChirpOutput
+    errors: [NotFoundError]
 }
+@input
+structure GetChirpInput { @required @httpLabel chirpId: ChirpId }
+@output
+structure GetChirpOutput { @required @httpPayload chirp: Chirp }
 
-/// ============================================================================
-/// DAR LIKE
-/// ============================================================================
-
-@http(method: "POST", uri: "/chirps/{chirpId}/like")
-operation LikeChirp {
-    input: LikeChirpInput
-    output: LikeChirpOutput
-    errors: [
-        ValidationError
-        NotFoundError
-        UnauthorizedError
-        InternalServerError
-    ]
-}
-
-structure LikeChirpInput {
-    @required
-    @httpLabel
-    chirpId: UUID
-}
-
-structure LikeChirpOutput {
-    @required
-    message: String = "Like added successfully"
-
-    @required
-    chirp: Chirp
-}
-
-/// ============================================================================
-/// QUITAR LIKE
-/// ============================================================================
-
-@http(method: "DELETE", uri: "/chirps/{chirpId}/like")
+// DeleteChirp — DELETE /v1/chirps/{chirpId}
 @idempotent
-operation UnlikeChirp {
-    input: UnlikeChirpInput
-    output: UnlikeChirpOutput
-    errors: [
-        NotFoundError
-        UnauthorizedError
-        InternalServerError
-    ]
+@http(method: "DELETE", uri: "/v1/chirps/{chirpId}", code: 204)
+operation DeleteChirp {
+    input: DeleteChirpInput
+    output: DeleteChirpOutput
+    errors: [NotFoundError, ForbiddenError]
 }
+@input
+structure DeleteChirpInput { @required @httpLabel chirpId: ChirpId }
+@output
+structure DeleteChirpOutput {}
 
-structure UnlikeChirpInput {
-    @required
-    @httpLabel
-    chirpId: UUID
+// ListChirps — GET /v1/chirps?userId=...&pageSize=...&nextToken=...
+@readonly
+@http(method: "GET", uri: "/v1/chirps", code: 200)
+operation ListChirps {
+    input: ListChirpsInput
+    output: ListChirpsOutput
 }
-
-structure UnlikeChirpOutput {
-    @required
-    message: String = "Like removed successfully"
-
-    @required
-    chirp: Chirp
+@input
+structure ListChirpsInput {
+    @httpQuery("userId") userId: UserId
+    @httpQuery("pageSize") pageSize: PageSize
+    @httpQuery("nextToken") nextToken: NextToken
 }
-
-/// ============================================================================
-/// OCULTAR CHIRP
-/// ============================================================================
-
-@http(method: "POST", uri: "/chirps/{chirpId}/hide")
-operation HideChirp {
-    input: HideChirpInput
-    output: HideChirpOutput
-    errors: [
-        NotFoundError
-        UnauthorizedError
-        ForbiddenError  // Solo el autor puede ocultar
-        InternalServerError
-    ]
-}
-
-structure HideChirpInput {
-    @required
-    @httpLabel
-    chirpId: UUID
-}
-
-structure HideChirpOutput {
-    @required
-    message: String = "Chirp hidden successfully"
-
-    @required
-    chirp: Chirp
-}
-
-/// ============================================================================
-/// ESTRUCTURAS DE DATOS
-/// ============================================================================
-
-/// Estructura principal de un Chirp
-structure Chirp {
-    @required
-    chirpId: UUID
-
-    @required
-    userId: UUID
-
-    @required
-    username: Username
-
-    @required
-    content: ChirpContent
-
-    mediaUrls: MediaUrlList
-
-    @required
-    createdAt: DateTime
-
-    @required
-    likesCount: Integer
-
-    @required
-    commentsCount: Integer
-
-    @required
-    repostsCount: Integer
-
-    @required
-    hidden: Boolean = false
-}
-
-list MediaUrlList {
-    member: String
+@output
+structure ListChirpsOutput {
+    @required chirps: ChirpList
+    nextToken: NextToken
 }
 ```
 
 ---
 
-### Paso 2.4: Crear main.smithy
+### Paso 2.4: Crear users.smithy
+
+**Archivo:** `smithy/model/users.smithy`
+
+```smithy
+$version: "2"
+
+namespace com.chirp
+
+resource UserResource {
+    identifiers: { userId: UserId }
+    read: GetUser
+}
+
+@length(min: 3, max: 30)
+@pattern("^[a-zA-Z0-9_]+$")
+string Username
+
+@length(min: 1, max: 100)
+string DisplayName
+
+@length(min: 0, max: 160)
+string Bio
+
+structure User {
+    @required userId: UserId
+    @required username: Username
+    @required email: Email
+    @required displayName: DisplayName
+    bio: Bio
+    avatarUrl: MediaUrl
+    @required verified: Boolean
+    @required createdAt: Timestamp
+}
+
+list UserList { member: User }
+
+@readonly
+@http(method: "GET", uri: "/v1/users/{userId}", code: 200)
+operation GetUser {
+    input: GetUserInput
+    output: GetUserOutput
+    errors: [NotFoundError]
+}
+@input
+structure GetUserInput { @required @httpLabel userId: UserId }
+@output
+structure GetUserOutput { @required @httpPayload user: User }
+```
+
+---
+
+### Paso 2.5: Crear likes.smithy
+
+**Archivo:** `smithy/model/likes.smithy`
+
+```smithy
+$version: "2"
+
+namespace com.chirp
+
+resource LikeResource {
+    identifiers: { chirpId: ChirpId }
+    operations: [LikeChirp, UnlikeChirp]
+}
+
+structure Like {
+    @required chirpId: ChirpId
+    @required userId: UserId
+    @required createdAt: Timestamp
+}
+
+// POST /v1/chirps/{chirpId}/likes
+@http(method: "POST", uri: "/v1/chirps/{chirpId}/likes", code: 201)
+operation LikeChirp {
+    input: LikeChirpInput
+    output: LikeChirpOutput
+    errors: [NotFoundError, ConflictError, ForbiddenError]
+}
+@input
+structure LikeChirpInput { @required @httpLabel chirpId: ChirpId }
+@output
+structure LikeChirpOutput { @required @httpPayload like: Like }
+
+// DELETE /v1/chirps/{chirpId}/likes
+@idempotent
+@http(method: "DELETE", uri: "/v1/chirps/{chirpId}/likes", code: 204)
+operation UnlikeChirp {
+    input: UnlikeChirpInput
+    output: UnlikeChirpOutput
+    errors: [NotFoundError, ForbiddenError]
+}
+@input
+structure UnlikeChirpInput { @required @httpLabel chirpId: ChirpId }
+@output
+structure UnlikeChirpOutput {}
+```
+
+---
+
+### Paso 2.6: Crear comments.smithy
+
+**Archivo:** `smithy/model/comments.smithy`
+
+```smithy
+$version: "2"
+
+namespace com.chirp
+
+resource CommentResource {
+    identifiers: { chirpId: ChirpId, commentId: CommentId }
+    create: CreateComment
+    delete: DeleteComment
+    list: ListComments
+}
+
+@length(min: 1, max: 500)
+string CommentContent
+
+structure Comment {
+    @required commentId: CommentId
+    @required chirpId: ChirpId
+    @required userId: UserId
+    @required content: CommentContent
+    @required createdAt: Timestamp
+}
+
+list CommentList { member: Comment }
+
+// POST /v1/chirps/{chirpId}/comments
+@http(method: "POST", uri: "/v1/chirps/{chirpId}/comments", code: 201)
+operation CreateComment {
+    input: CreateCommentInput
+    output: CreateCommentOutput
+    errors: [BadRequestError, NotFoundError]
+}
+@input
+structure CreateCommentInput {
+    @required @httpLabel chirpId: ChirpId
+    @required content: CommentContent
+}
+@output
+structure CreateCommentOutput { @required @httpPayload comment: Comment }
+
+// DELETE /v1/chirps/{chirpId}/comments/{commentId}
+@idempotent
+@http(method: "DELETE", uri: "/v1/chirps/{chirpId}/comments/{commentId}", code: 204)
+operation DeleteComment {
+    input: DeleteCommentInput
+    output: DeleteCommentOutput
+    errors: [NotFoundError, ForbiddenError]
+}
+@input
+structure DeleteCommentInput {
+    @required @httpLabel chirpId: ChirpId
+    @required @httpLabel commentId: CommentId
+}
+@output
+structure DeleteCommentOutput {}
+
+// GET /v1/chirps/{chirpId}/comments
+@readonly
+@http(method: "GET", uri: "/v1/chirps/{chirpId}/comments", code: 200)
+operation ListComments {
+    input: ListCommentsInput
+    output: ListCommentsOutput
+    errors: [NotFoundError]
+}
+@input
+structure ListCommentsInput {
+    @required @httpLabel chirpId: ChirpId
+    @httpQuery("pageSize") pageSize: PageSize
+    @httpQuery("nextToken") nextToken: NextToken
+}
+@output
+structure ListCommentsOutput {
+    @required comments: CommentList
+    nextToken: NextToken
+}
+```
+
+---
+
+### Paso 2.7: Crear follows.smithy
+
+**Archivo:** `smithy/model/follows.smithy`
+
+```smithy
+$version: "2"
+
+namespace com.chirp
+
+resource FollowResource {
+    identifiers: { userId: UserId, followedId: UserId }
+    create: FollowUser
+    delete: UnfollowUser
+}
+
+structure Follow {
+    @required followerId: UserId
+    @required followedId: UserId
+    @required createdAt: Timestamp
+}
+
+// POST /v1/users/{userId}/follows
+@http(method: "POST", uri: "/v1/users/{userId}/follows", code: 201)
+operation FollowUser {
+    input: FollowUserInput
+    output: FollowUserOutput
+    errors: [BadRequestError, NotFoundError, ConflictError, ForbiddenError]
+}
+@input
+structure FollowUserInput { @required @httpLabel userId: UserId }
+@output
+structure FollowUserOutput { @required @httpPayload follow: Follow }
+
+// DELETE /v1/users/{userId}/follows/{followedId}
+@idempotent
+@http(method: "DELETE", uri: "/v1/users/{userId}/follows/{followedId}", code: 204)
+operation UnfollowUser {
+    input: UnfollowUserInput
+    output: UnfollowUserOutput
+    errors: [NotFoundError, ForbiddenError]
+}
+@input
+structure UnfollowUserInput {
+    @required @httpLabel userId: UserId
+    @required @httpLabel followedId: UserId
+}
+@output
+structure UnfollowUserOutput {}
+
+// GET /v1/users/{userId}/followers
+@readonly
+@http(method: "GET", uri: "/v1/users/{userId}/followers", code: 200)
+operation ListFollowers {
+    input: ListFollowersInput
+    output: ListFollowersOutput
+    errors: [NotFoundError]
+}
+@input
+structure ListFollowersInput {
+    @required @httpLabel userId: UserId
+    @httpQuery("pageSize") pageSize: PageSize
+    @httpQuery("nextToken") nextToken: NextToken
+}
+@output
+structure ListFollowersOutput {
+    @required followers: UserList
+    nextToken: NextToken
+}
+
+// GET /v1/users/{userId}/following
+@readonly
+@http(method: "GET", uri: "/v1/users/{userId}/following", code: 200)
+operation ListFollowing {
+    input: ListFollowingInput
+    output: ListFollowingOutput
+    errors: [NotFoundError]
+}
+@input
+structure ListFollowingInput {
+    @required @httpLabel userId: UserId
+    @httpQuery("pageSize") pageSize: PageSize
+    @httpQuery("nextToken") nextToken: NextToken
+}
+@output
+structure ListFollowingOutput {
+    @required following: UserList
+    nextToken: NextToken
+}
+```
+
+---
+
+### Paso 2.8: Crear main.smithy
+
+Punto de entrada del servicio. Orquesta todos los resources y operaciones con `@httpBearerAuth`.
 
 **Archivo:** `smithy/model/main.smithy`
 
 ```smithy
 $version: "2"
 
-namespace com.chirp.api
+namespace com.chirp
 
 use aws.protocols#restJson1
-use com.chirp.auth#Login
-use com.chirp.auth#Logout
-use com.chirp.chirps#CreateChirp
-use com.chirp.chirps#LikeChirp
-use com.chirp.chirps#UnlikeChirp
-use com.chirp.chirps#HideChirp
 
 /// Servicio principal de la API de Chirp
-@restJson1
 @title("Chirp API")
+@restJson1
+@httpBearerAuth
+@paginated(inputToken: "nextToken", outputToken: "nextToken", pageSize: "pageSize")
 service ChirpService {
     version: "2026-04-04"
-
+    resources: [
+        UserResource
+        ChirpResource
+    ]
     operations: [
         Login
         Logout
-        CreateChirp
-        LikeChirp
-        UnlikeChirp
-        HideChirp
+        ListFollowers
+        ListFollowing
+    ]
+    errors: [
+        UnauthorizedError
+        ForbiddenError
+        InternalServerError
     ]
 }
 ```
 
 ---
 
-### Paso 2.5: Compilar los Modelos Smithy
+### Paso 2.9: Compilar y verificar
 
 ```bash
 # Desde la carpeta smithy/
-cd C:/Jose/Cursos/Maestria\ Fullstack/31\ IA/Proyecto/twitter/smithy
-
-# Compilar con Gradle
-./gradlew build
-
-# Si todo está bien, verás:
-# BUILD SUCCESSFUL
+./gradlew clean build
 ```
 
 **Salida esperada:**
-
 ```
-Downloading https://services.gradle.org/distributions/gradle-8.5-bin.zip
-...
-BUILD SUCCESSFUL in Xs
+BUILD SUCCESSFUL
+547 shapes validated
+4 plugins executed: smithyFormat, smithyBuild, smithyJarValidate, openapi
+12 artifacts generated
+```
+
+**Swagger UI local** — para visualizar todos los endpoints:
+```bash
+npm run swagger
+# Abre http://localhost:8080/swagger-ui.html
 ```
 
 **Si hay errores:**
-
-- Lee el mensaje cuidadosamente (Smithy da errores muy descriptivos)
-- Verifica la sintaxis en los archivos `.smithy`
-- Asegúrate que todos los `use` statements apuntan a namespaces correctos
+- Smithy da mensajes muy descriptivos con el archivo y línea exacta
 - Ejecuta `./gradlew clean build` para limpiar y recompilar
+- Verifica que todos los shapes referenciados existen en el mismo namespace `com.chirp`
 
 ---
 
@@ -937,12 +1154,22 @@ aws cognito-idp admin-set-user-password \
 ### 📋 Checklist Fase 4
 
 - [ ] Crear estructura de Lambda Functions
-- [ ] Implementar LoginFunction
-- [ ] Implementar LogoutFunction
-- [ ] Implementar CreateChirpFunction
-- [ ] Implementar LikeChirpFunction
-- [ ] Implementar UnlikeChirpFunction
-- [ ] Implementar HideChirpFunction
+- [ ] Implementar LoginFunction (`POST /v1/auth/login`)
+- [ ] Implementar LogoutFunction (`POST /v1/auth/logout`)
+- [ ] Implementar CreateChirpFunction (`POST /v1/chirps`)
+- [ ] Implementar GetChirpFunction (`GET /v1/chirps/{chirpId}`)
+- [ ] Implementar DeleteChirpFunction (`DELETE /v1/chirps/{chirpId}`)
+- [ ] Implementar ListChirpsFunction (`GET /v1/chirps`)
+- [ ] Implementar LikeChirpFunction (`POST /v1/chirps/{chirpId}/likes`)
+- [ ] Implementar UnlikeChirpFunction (`DELETE /v1/chirps/{chirpId}/likes`)
+- [ ] Implementar CreateCommentFunction (`POST /v1/chirps/{chirpId}/comments`)
+- [ ] Implementar DeleteCommentFunction (`DELETE /v1/chirps/{chirpId}/comments/{commentId}`)
+- [ ] Implementar ListCommentsFunction (`GET /v1/chirps/{chirpId}/comments`)
+- [ ] Implementar GetUserFunction (`GET /v1/users/{userId}`)
+- [ ] Implementar FollowUserFunction (`POST /v1/users/{userId}/follows`)
+- [ ] Implementar UnfollowUserFunction (`DELETE /v1/users/{userId}/follows/{followedId}`)
+- [ ] Implementar ListFollowersFunction (`GET /v1/users/{userId}/followers`)
+- [ ] Implementar ListFollowingFunction (`GET /v1/users/{userId}/following`)
 - [ ] Agregar Lambdas al Stack CDK
 - [ ] Desplegar Lambdas
 
@@ -952,11 +1179,14 @@ aws cognito-idp admin-set-user-password \
 
 ```bash
 # Desde la raíz del proyecto
-cd C:\Jose\Cursos\Maestria Fullstack\31 IA\Proyecto\twitter
+cd twitter/
 
 # Crear estructura
 mkdir -p lambda/src/handlers/auth
 mkdir -p lambda/src/handlers/chirps
+mkdir -p lambda/src/handlers/users
+mkdir -p lambda/src/handlers/comments
+mkdir -p lambda/src/handlers/follows
 mkdir -p lambda/src/middleware
 mkdir -p lambda/src/services
 mkdir -p lambda/src/utils
@@ -1042,13 +1272,23 @@ npm install --save-dev \
 
 **Completado:**
 
-- ✅ Fase 1: Configuración de Smithy (Gradle + build.gradle)
-- ✅ Fase 2: Modelos Smithy definidos y compilados exitosamente
-- ➖ Fase 3: AWS Cognito configurado (pendiente de deploy)
+- ✅ Fase 1: Configuración de Smithy (Gradle + dependencias OpenAPI)
+- ✅ Fase 2: 8 modelos Smithy compilados — **547 shapes validados**, 14 endpoints, namespace único `com.chirp`
+  - `common.smithy` — tipos compartidos (IDs, Timestamp, MediaUrl, 6 errores HTTP)
+  - `auth.smithy` — Login / Logout
+  - `chirps.smithy` — CRUD de chirps + paginación
+  - `users.smithy` — perfil de usuario
+  - `likes.smithy` — likes de chirps
+  - `comments.smithy` — comentarios de chirps
+  - `follows.smithy` — follows entre usuarios
+  - `main.smithy` — servicio con `@httpBearerAuth` + `@paginated`
+- ✅ OpenAPI spec generado: `build/smithyprojections/chirp-smithy/source/openapi/ChirpService.openapi.json`
+- ✅ Swagger UI local disponible: `npm run swagger` → `http://localhost:8080/swagger-ui.html`
+- ➖ Fase 3: AWS Cognito configurado en CDK (pendiente de deploy)
 
 **En Progreso:**
 
-- 🚧 Fase 4: Lambda Functions (siguiente)
+- 🚧 Fase 4: Lambda Functions (17 handlers por implementar)
 
 **Pendiente:**
 
@@ -1057,19 +1297,19 @@ npm install --save-dev \
 - ⬜ Testing
 
 **🔍 Nota sobre Autenticación:**
-En esta fase inicial, los modelos Smithy definen las operaciones sin autenticación explícita. La autenticación JWT se implementará en la Fase 5 (API Gateway) usando Cognito Authorizer.
+El modelo Smithy ya declara `@httpBearerAuth` en el servicio. Esto se refleja en el spec OpenAPI generado con `securitySchemes`. La validación real del token JWT se implementa en la **Fase 5** con el Cognito Authorizer de API Gateway.
 
 ---
 
 ## Próximos Pasos
 
-1. **Implementar LoginFunction** - Handler para autenticación con Cognito
-2. **Implementar las demás Lambdas** - CRUD operations
-3. **Configurar API Gateway** - Exponer las Lambdas como REST API
-4. **Testing end-to-end** - Probar todo el flujo
+1. **Desplegar Cognito** (Fase 3) — `cdk deploy` del stack de infraestructura
+2. **Implementar LoginFunction** — Handler para autenticación con Cognito
+3. **Implementar los 16 handlers restantes** — CRUD de chirps, comentarios, follows, likes, usuarios
+4. **Configurar API Gateway** — Exponer las Lambdas como REST API con Cognito Authorizer
+5. **Testing end-to-end** — Probar todo el flujo con los contratos del OpenAPI spec
 
 ---
 
-**Fecha de última actualización:** Abril 4, 2026  
-**Autor:** José (con asistencia de GitHub Copilot)  
+**Fecha de última actualización:** Abril 5, 2026
 **Proyecto:** Chirp - Plataforma de Microblogging

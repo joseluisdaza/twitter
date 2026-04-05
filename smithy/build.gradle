@@ -12,4 +12,6 @@ dependencies {
     implementation 'software.amazon.smithy:smithy-model:1.45.0'
     implementation 'software.amazon.smithy:smithy-aws-traits:1.45.0'
     implementation 'software.amazon.smithy:smithy-linters:1.45.0'
+    implementation 'software.amazon.smithy:smithy-openapi:1.45.0'
+    implementation 'software.amazon.smithy:smithy-aws-apigateway-openapi:1.45.0'
 }

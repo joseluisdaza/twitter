@@ -1,25 +1,67 @@
 # ──────────────────────────────────────────────
-# CDK / Node.js / TypeScript  (from infrastructure/.gitignore)
+# Node.js / TypeScript
 # ──────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+*.log
+
+# TypeScript compiled output
 *.js
 !jest.config.js
 *.d.ts
-node_modules
+*.js.map
 
-# CDK asset staging directory
-.cdk.staging
-cdk.out
+# ──────────────────────────────────────────────
+# CDK
+# ──────────────────────────────────────────────
+.cdk.staging/
+cdk.out/
 
 # ──────────────────────────────────────────────
 # Smithy
 # ──────────────────────────────────────────────
 
-# Smithy build output
+# Build output (clases Java, JARs, OpenAPI generado, etc.)
 **/build/
 
-# Gradle cache and wrapper jar (used by Smithy CLI / smithy-build)
+# Gradle cache y wrapper jar
 .gradle/
-gradle/wrapper/gradle-wrapper.jar
+**/gradle/wrapper/gradle-wrapper.jar
 
-# Smithy projections output (generated code, e.g. OpenAPI, SDK)
+# Directorio src de TypeScript (eliminado, pero por si acaso)
+smithy/src/
+
+# Smithy projections extra
 smithy/output/
+
+# Swagger UI — archivo de visualización local, no va al repo
+smithy/swagger-ui.html
+
+# ──────────────────────────────────────────────
+# IDE y editores
+# ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+*.suo
+*.user
+
+# ──────────────────────────────────────────────
+# Sistema operativo
+# ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ──────────────────────────────────────────────
+# Variables de entorno y secretos
+# ──────────────────────────────────────────────
+.env
+.env.*
+!.env.example
