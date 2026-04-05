@@ -884,11 +884,23 @@ service ChirpService {
 
 ---
 
-### Paso 2.9: Compilar y verificar
+### Paso 2.9: Compilar, generar OpenAPI y visualizar en Swagger
+
+El flujo completo tiene tres pasos: compilar los modelos, generar el spec OpenAPI, y visualizarlo en el navegador. Los tres se ejecutan con dos comandos desde la carpeta `smithy/`.
+
+#### 1️⃣ Compilar los modelos y generar el spec OpenAPI
 
 ```bash
 # Desde la carpeta smithy/
 ./gradlew clean build
+```
+
+Este comando hace todo en una sola pasada:
+- Valida los 8 archivos `.smithy` y sus 547 shapes
+- Ejecuta el plugin `openapi` y genera el spec en:
+
+```
+smithy/build/smithyprojections/chirp-smithy/source/openapi/ChirpService.openapi.json
 ```
 
 **Salida esperada:**
@@ -899,16 +911,34 @@ BUILD SUCCESSFUL
 12 artifacts generated
 ```
 
-**Swagger UI local** — para visualizar todos los endpoints:
+> Si solo cambiaste modelos Smithy y quieres regenerar sin limpiar el caché, puedes usar `./gradlew build` (sin `clean`).
+
+#### 2️⃣ Levantar el servidor de Swagger UI
+
 ```bash
+# Desde la carpeta smithy/ (en otra terminal o después del build)
 npm run swagger
-# Abre http://localhost:8080/swagger-ui.html
 ```
 
-**Si hay errores:**
-- Smithy da mensajes muy descriptivos con el archivo y línea exacta
-- Ejecuta `./gradlew clean build` para limpiar y recompilar
-- Verifica que todos los shapes referenciados existen en el mismo namespace `com.chirp`
+Esto sirve el directorio `smithy/` en el puerto 8080, incluyendo el spec OpenAPI generado.
+
+#### 3️⃣ Abrir en el navegador
+
+```
+http://localhost:8080/swagger-ui.html
+```
+
+El Swagger UI carga el spec desde:
+```
+http://localhost:8080/build/smithyprojections/chirp-smithy/source/openapi/ChirpService.openapi.json
+```
+
+Para detener el servidor: `Ctrl + C` en la terminal donde corre `npm run swagger`.
+
+**Si hay errores en el build:**
+- Smithy muestra el archivo y línea exacta del error
+- Ejecuta `./gradlew clean build` para limpiar caché y recompilar
+- Verifica que todos los shapes referenciados existen en el namespace `com.chirp`
 
 ---
 
