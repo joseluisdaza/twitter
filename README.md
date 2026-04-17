@@ -699,7 +699,7 @@ API_GATEWAY_URL=https://xxxxxx.execute-api.us-east-1.amazonaws.com
 - [ ] Search functionality
 - [ ] Notifications system
 
-### 🔮 Phase 4: Advanced Features (FUTURE)
+### 🔮 Phase 4: Advanced Features (FUTURE - NICE TO HAVE)
 
 - [ ] Elasticsearch for full-text search
 - [ ] Trending topics algorithm
