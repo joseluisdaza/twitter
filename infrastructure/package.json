@@ -11,17 +11,21 @@
     "cdk": "cdk"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.161",
     "@types/jest": "^30",
     "@types/node": "^24.10.1",
     "aws-cdk": "2.1114.1",
+    "esbuild": "^0.28.0",
     "jest": "^30",
     "ts-jest": "^29",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.1034.0",
     "@aws-sdk/client-dynamodb": "^3.1024.0",
     "@aws-sdk/lib-dynamodb": "^3.1024.0",
+    "@aws-smithy/server-common": "^1.0.0-alpha.10",
     "aws-cdk-lib": "^2.244.0",
     "constructs": "^10.5.0",
     "uuid": "^13.0.0"
