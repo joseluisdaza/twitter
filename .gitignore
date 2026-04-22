@@ -1,12 +1,18 @@
 # ──────────────────────────────────────────────
-# CDK / Node.js / TypeScript  (from infrastructure/.gitignore)
+# Node.js / TypeScript
 # ──────────────────────────────────────────────
-*.js
-!jest.config.js
-*.d.ts
-node_modules
+node_modules/
 
-# CDK asset staging directory
+# ──────────────────────────────────────────────
+# CDK (infrastructure/)
+# ──────────────────────────────────────────────
+
+# TypeScript compilados — solo dentro de infrastructure
+infrastructure/**/*.js
+!infrastructure/jest.config.js
+infrastructure/**/*.d.ts
+
+# CDK staging y outputs
 .cdk.staging
 cdk.out
 
@@ -14,12 +20,16 @@ cdk.out
 # Smithy
 # ──────────────────────────────────────────────
 
-# Smithy build output
-**/build/
+# Gradle build output (artefactos de compilación Java/Gradle)
+smithy/build/
 
-# Gradle cache and wrapper jar (used by Smithy CLI / smithy-build)
-.gradle/
-gradle/wrapper/gradle-wrapper.jar
+# Gradle cache local (creado al correr ./gradlew)
+smithy/.gradle/
 
-# Smithy projections output (generated code, e.g. OpenAPI, SDK)
-smithy/output/
+# Gradle wrapper JAR (binario descargado, no debe commitearse)
+smithy/gradle/wrapper/gradle-wrapper.jar
+
+# Código TypeScript generado por Smithy (se regenera con ./gradlew build)
+# Cliente: smithy/generated/source/typescript-client-codegen/
+# Servidor: smithy/generated/source/typescript-server-codegen/
+smithy/generated/
