@@ -3,6 +3,13 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "baseUrl": ".",
+    "paths": {
+      "@aws-smithy/server-common": ["node_modules/@aws-smithy/server-common"],
+      "@aws-smithy/server-common/*": ["node_modules/@aws-smithy/server-common/*"],
+      "@smithy/smithy-client": ["node_modules/@smithy/smithy-client"],
+      "@smithy/smithy-client/*": ["node_modules/@smithy/smithy-client/*"]
+    },
     "lib": [
       "es2022"
     ],

@@ -3,6 +3,12 @@ plugins {
     id 'software.amazon.smithy.gradle.smithy-jar' version '0.10.0'
 }
 
+// Incluir la carpeta 'generated' en el clean, para que
+// './gradlew clean build' fuerce la regeneración del código TypeScript
+clean {
+    delete 'generated'
+}
+
 repositories {
     mavenLocal()
     mavenCentral()
