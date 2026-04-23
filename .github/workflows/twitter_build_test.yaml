@@ -72,7 +72,7 @@ jobs:
       run: ./gradlew clean build
     
     - name: Ejecutar linters de Smithy
-      run: ./gradlew smithyBuildJar
+      run: ./gradlew smithyBuild
 
   # ================== Trabajo 3: Verificar documentacion ==================
   documentation-check:
