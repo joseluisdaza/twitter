@@ -3,6 +3,8 @@ import { Construct } from 'constructs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { RemovalPolicy } from 'aws-cdk-lib/core';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import { ChirpLambdas } from './constructs/chirp-lambdas';
+import { ChirpApi } from './constructs/chirp-api';
 
 export class InfrastructureStack extends cdk.Stack {
   // Propiedades públicas para acceder a las tablas desde otros stacks si es necesario
@@ -384,6 +386,28 @@ export class InfrastructureStack extends cdk.Stack {
       value: `https://${userPoolDomain.domainName}.auth.${this.region}.amazoncognito.com`,
       description: 'URL del dominio de autenticación',
       exportName: 'ChirpUserPoolDomainUrl',
+    });
+
+    // ========================================================================
+    // LAMBDA FUNCTIONS
+    // ========================================================================
+    const lambdas = new ChirpLambdas(this, 'ChirpLambdas', {
+      usersTable: this.usersTable,
+      chirpsTable: this.chirpsTable,
+      followsTable: this.followsTable,
+      likesTable: this.likesTable,
+      commentsTable: this.commentsTable,
+      userPool,
+      userPoolClient,
+    });
+
+    // ========================================================================
+    // API GATEWAY
+    // ========================================================================
+    new ChirpApi(this, 'ChirpApi', {
+      fns: lambdas.fns,
+      userPool,
+      userPoolClient,
     });
   }
 }

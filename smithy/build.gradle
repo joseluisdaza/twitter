@@ -9,7 +9,11 @@ repositories {
 }
 
 dependencies {
+    // Smithy core
     implementation 'software.amazon.smithy:smithy-model:1.45.0'
     implementation 'software.amazon.smithy:smithy-aws-traits:1.45.0'
     implementation 'software.amazon.smithy:smithy-linters:1.45.0'
+
+    // TypeScript codegen — genera cliente y servidor SDK desde los modelos Smithy
+    implementation 'software.amazon.smithy.typescript:smithy-typescript-codegen:0.21.0'
 }

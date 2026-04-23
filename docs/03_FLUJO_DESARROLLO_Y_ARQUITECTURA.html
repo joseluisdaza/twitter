@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chirp — Flujo de Desarrollo y Arquitectura</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3352;
+      --accent: #4f8ef7;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --text: #e2e8f0;
+      --muted: #8892aa;
+      --code-bg: #141720;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.7;
+    }
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #1e2a4a 0%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 2rem 2.5rem;
+      text-align: center;
+    }
+    header .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: .25rem .75rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    header h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -.02em; }
+    header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: .5rem; font-size: 1.05rem; }
+    /* ── NAV ── */
+    nav {
+      display: flex; flex-wrap: wrap; gap: .5rem;
+      justify-content: center;
+      padding: 1.25rem 2rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    nav a {
+      color: var(--muted); text-decoration: none;
+      font-size: .85rem; font-weight: 500;
+      padding: .35rem .9rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      transition: all .2s;
+    }
+    nav a:hover { color: var(--text); border-color: var(--accent); background: rgba(79,142,247,.1); }
+    /* ── LAYOUT ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+    section { margin-bottom: 4rem; }
+    h2 {
+      font-size: 1.6rem; font-weight: 700;
+      border-left: 4px solid var(--accent);
+      padding-left: 1rem; margin-bottom: 1.5rem;
+    }
+    h3 { font-size: 1.15rem; font-weight: 600; margin: 1.5rem 0 .75rem; color: var(--accent2); }
+    p { color: var(--muted); margin-bottom: .9rem; }
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    /* ── DIAGRAM BOX ── */
+    .diagram-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem 1rem;
+      overflow-x: auto;
+      text-align: center;
+    }
+    /* ── CODE ── */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.1rem 1.25rem;
+      overflow-x: auto;
+      font-size: .85rem;
+      line-height: 1.6;
+      margin: .75rem 0;
+    }
+    code { font-family: 'Cascadia Code', 'Fira Code', monospace; color: #a5f3fc; }
+    pre code { color: var(--text); }
+    /* ── STEPS ── */
+    .steps { display: flex; flex-direction: column; gap: 1.25rem; }
+    .step {
+      display: flex; gap: 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 2.5rem; height: 2.5rem; flex-shrink: 0;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.1rem; color: #fff;
+    }
+    .step-body h4 { font-size: 1rem; font-weight: 700; margin-bottom: .4rem; }
+    .step-body p { margin: 0; font-size: .9rem; }
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%; border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 10px; overflow: hidden;
+      font-size: .88rem;
+    }
+    th {
+      background: var(--surface2);
+      padding: .75rem 1rem;
+      text-align: left;
+      font-size: .8rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    .tag {
+      display: inline-block; padding: .15rem .55rem;
+      border-radius: 999px; font-size: .75rem; font-weight: 600;
+    }
+    .tag-green { background: rgba(52,211,153,.15); color: var(--green); }
+    .tag-yellow { background: rgba(251,191,36,.15); color: var(--yellow); }
+    .tag-red { background: rgba(248,113,113,.15); color: var(--red); }
+    .tag-blue { background: rgba(79,142,247,.15); color: var(--accent); }
+    /* ── GRID ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media(max-width:640px) { .grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<header>
+  <div class="badge">Proyecto Chirp · Documentación Técnica</div>
+  <h1>Flujo de Desarrollo y <span>Arquitectura</span></h1>
+  <p>De los modelos Smithy hasta las funciones Lambda en AWS — todo el ciclo explicado</p>
+</header>
+
+<nav>
+  <a href="#arquitectura">🏗️ Arquitectura</a>
+  <a href="#flujo">🔄 Flujo de desarrollo</a>
+  <a href="#etapa1">1 · Smithy</a>
+  <a href="#etapa2">2 · Gradle</a>
+  <a href="#etapa3">3 · Handlers</a>
+  <a href="#etapa4">4 · Deploy</a>
+  <a href="#comandos">⚡ Comandos</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════ ARQUITECTURA -->
+<section id="arquitectura">
+  <h2>🏗️ Arquitectura completa de la aplicación</h2>
+  <p>Chirp es una plataforma de microblogging serverless desplegada completamente en AWS. El siguiente diagrama muestra todos los componentes y cómo se relacionan entre sí.</p>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TB
+    Client(["👤 Cliente\nFrontend / Postman"])
+
+    subgraph AWS["☁️  AWS Cloud"]
+      subgraph AuthLayer["🔐 Autenticación"]
+        Cognito["AWS Cognito\nUser Pool\n─────────────\n· Registro de usuarios\n· Login con email\n· Emisión de JWT tokens\n· Verificación de email\n· MFA opcional (TOTP)"]
+      end
+
+      subgraph APILayer["🚪 API Layer"]
+        APIGW["API Gateway HTTP API\n─────────────\n· 23 rutas definidas\n· JWT Authorizer (Cognito)\n· CORS habilitado\n· Rutas públicas y protegidas"]
+      end
+
+      subgraph LambdaLayer["⚡ Lambda Functions  ·  Node.js 22  ·  256 MB  ·  30s timeout"]
+        direction LR
+        LA["AUTH\n─────\nregister\nlogin\nlogout"]
+        LC["CHIRPS\n─────\ncreateChirp · getChirp\ndeleteChirp · hideChirp\nlikeChirp · unlikeChirp\ngetChirpLikes · getUserLikes\ngetUserChirps · getTimeline"]
+        LU["USERS\n─────\ngetUser\ngetUserByUsername\nupdateUserProfile"]
+        LF["FOLLOWS\n─────\nfollowUser\nunfollowUser\ngetFollowers\ngetFollowing"]
+        LCo["COMMENTS\n─────\ncreateComment\ngetChirpComments\ndeleteComment"]
+      end
+
+      subgraph DBLayer["🗄️ DynamoDB  ·  On-demand  ·  Encriptado  ·  PITR habilitado"]
+        direction LR
+        T1[("chirp-users\n─────\nPK: userId\nGSI: username-index\nGSI: email-index")]
+        T2[("chirp-chirps\n─────\nPK: chirpId\nGSI: userId-createdAt-index")]
+        T3[("chirp-follows\n─────\nPK: followerId\nSK: followedId\nGSI: followedId-followerId-index")]
+        T4[("chirp-likes\n─────\nPK: chirpId\nSK: userId\nGSI: userId-chirpId-index")]
+        T5[("chirp-comments\n─────\nPK: commentId\nGSI: chirpId-createdAt-index\nGSI: userId-createdAt-index")]
+      end
+    end
+
+    Client -->|"HTTPS"| APIGW
+    APIGW <-->|"Valida JWT"| Cognito
+    APIGW --> LA & LC & LU & LF & LCo
+
+    LA <-->|"AdminInitiateAuth\nAdminCreateUser\nGlobalSignOut"| Cognito
+    LA --> T1
+    LC --> T2 & T4
+    LU --> T1
+    LF --> T3 & T1
+    LCo --> T5 & T2
+
+    style Client fill:#4f8ef7,color:#fff,stroke:none
+    style Cognito fill:#7c3aed,color:#fff,stroke:none
+    style APIGW fill:#0369a1,color:#fff,stroke:none
+    style LA fill:#065f46,color:#fff,stroke:none
+    style LC fill:#065f46,color:#fff,stroke:none
+    style LU fill:#065f46,color:#fff,stroke:none
+    style LF fill:#065f46,color:#fff,stroke:none
+    style LCo fill:#065f46,color:#fff,stroke:none
+    style T1 fill:#92400e,color:#fff,stroke:none
+    style T2 fill:#92400e,color:#fff,stroke:none
+    style T3 fill:#92400e,color:#fff,stroke:none
+    style T4 fill:#92400e,color:#fff,stroke:none
+    style T5 fill:#92400e,color:#fff,stroke:none
+    </div>
+  </div>
+
+  <h3>Rutas públicas vs. protegidas</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Método</th><th>Ruta</th><th>Lambda</th><th>Auth</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/auth/register</code></td><td>register</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>POST</code></td><td><code>/auth/login</code></td><td>login</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>POST</code></td><td><code>/auth/logout</code></td><td>logout</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>POST</code></td><td><code>/chirps</code></td><td>createChirp</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/chirps/{chirpId}</code></td><td>getChirp</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>DELETE</code></td><td><code>/chirps/{chirpId}</code></td><td>deleteChirp</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>POST</code></td><td><code>/chirps/{chirpId}/hide</code></td><td>hideChirp</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>POST</code></td><td><code>/chirps/{chirpId}/like</code></td><td>likeChirp</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>DELETE</code></td><td><code>/chirps/{chirpId}/like</code></td><td>unlikeChirp</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/chirps/{chirpId}/likes</code></td><td>getChirpLikes</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/chirps/{chirpId}/comments</code></td><td>getChirpComments</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>POST</code></td><td><code>/chirps/{chirpId}/comments</code></td><td>createComment</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>DELETE</code></td><td><code>/chirps/{chirpId}/comments/{commentId}</code></td><td>deleteComment</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/timeline</code></td><td>getTimeline</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/users/{userId}</code></td><td>getUser</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>PUT</code></td><td><code>/users/{userId}</code></td><td>updateUserProfile</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/users/by-username/{username}</code></td><td>getUserByUsername</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/users/{userId}/chirps</code></td><td>getUserChirps</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/users/{userId}/likes</code></td><td>getUserLikes</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/users/{userId}/followers</code></td><td>getFollowers</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/users/{userId}/following</code></td><td>getFollowing</td><td><span class="tag tag-green">Pública</span></td></tr>
+        <tr><td><code>POST</code></td><td><code>/users/{userId}/follow</code></td><td>followUser</td><td><span class="tag tag-blue">JWT</span></td></tr>
+        <tr><td><code>DELETE</code></td><td><code>/users/{userId}/follow</code></td><td>unfollowUser</td><td><span class="tag tag-blue">JWT</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ FLUJO -->
+<section id="flujo">
+  <h2>🔄 Flujo de desarrollo</h2>
+  <p>El principio fundamental del proyecto es que <strong>los modelos Smithy son la única fuente de verdad del API</strong>. Los tipos TypeScript, las validaciones y las interfaces se derivan automáticamente a partir de ellos.</p>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart LR
+    A(["📝 1\nEditar\n.smithy"])
+    B(["⚙️ 2\nGradle Build\n./gradlew build"])
+    C(["📦 3\nmodels_0.ts\nregenerado"])
+    D(["🧑‍💻 4\nAdaptar handler\nsi es necesario"])
+    E(["🚀 5\nnpx cdk deploy"])
+    F(["☁️ 6\nLambda\nactualizado"])
+
+    A --> B --> C --> D --> E --> F
+
+    style A fill:#4f8ef7,color:#fff,stroke:none
+    style B fill:#7c3aed,color:#fff,stroke:none
+    style C fill:#a78bfa,color:#fff,stroke:none
+    style D fill:#065f46,color:#fff,stroke:none
+    style E fill:#0369a1,color:#fff,stroke:none
+    style F fill:#92400e,color:#fff,stroke:none
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>Editar los modelos Smithy</h4>
+        <p>Los archivos <code>.smithy</code> en <code>smithy/model/</code> definen el API — operaciones, estructuras, validaciones y errores. Son independientes de cualquier lenguaje de programación.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>Regenerar código TypeScript con Gradle</h4>
+        <p>El compilador de Smithy lee los <code>.smithy</code> y regenera <code>models_0.ts</code> con los tipos TypeScript y los métodos <code>.validate()</code> para cada estructura.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>Adaptar el Lambda handler (si es necesario)</h4>
+        <p>Si agregaste campos nuevos o una operación completamente nueva, el handler TypeScript debe actualizarse para usar esos cambios. Si solo cambiaste una restricción, <code>.validate()</code> se actualiza solo.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Desplegar con CDK</h4>
+        <p><code>npx cdk deploy</code> usa esbuild para empaquetar cada handler y solo sube a AWS los Lambdas que cambiaron (comparación por hash).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ ETAPA 1 -->
+<section id="etapa1">
+  <h2>📝 Etapa 1 — Modificar el modelo Smithy</h2>
+  <p><strong>Directorio:</strong> <code>smithy/model/</code></p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-top:0">Archivos del modelo</h3>
+      <table>
+        <thead><tr><th>Archivo</th><th>Contenido</th></tr></thead>
+        <tbody>
+          <tr><td><code>common.smithy</code></td><td>Tipos base, UUID, Email, errores</td></tr>
+          <tr><td><code>auth.smithy</code></td><td>Login, Register, Logout</td></tr>
+          <tr><td><code>chirps.smithy</code></td><td>CreateChirp, GetChirp, Like, Timeline…</td></tr>
+          <tr><td><code>comments.smithy</code></td><td>CreateComment, GetChirpComments, DeleteComment</td></tr>
+          <tr><td><code>users.smithy</code></td><td>GetUser, UpdateUserProfile…</td></tr>
+          <tr><td><code>follows.smithy</code></td><td>FollowUser, GetFollowers, GetFollowing…</td></tr>
+          <tr><td><code>main.smithy</code></td><td>Servicio principal (lista todas las ops)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Ejemplo: agregar un campo nuevo</h3>
+      <p>Para agregar <code>tags</code> a <code>CreateChirpInput</code> en <code>chirps.smithy</code>:</p>
+      <pre><code>structure CreateChirpInput {
+    @required
+    content: ChirpContent
+
+    mediaUrls: MediaUrlList
+
+    // Nuevo campo (opcional)
+    tags: TagList
+}
+
+list TagList {
+    member: String
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ ETAPA 2 -->
+<section id="etapa2">
+  <h2>⚙️ Etapa 2 — Regenerar código TypeScript con Gradle</h2>
+  <p><strong>Directorio:</strong> <code>smithy/</code></p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-top:0">Comando</h3>
+      <pre><code># Windows
+.\gradlew.bat build
+
+# Linux / Mac
+./gradlew build</code></pre>
+      <p>Si hay errores en el modelo Smithy, el build falla con mensajes descriptivos antes de tocar ningún archivo TypeScript.</p>
+      <pre><code># Limpiar y recompilar desde cero
+.\gradlew.bat clean build</code></pre>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Qué se regenera</h3>
+      <pre><code>smithy/generated/source/
+  typescript-server-codegen/src/
+    models/
+      models_0.ts  ← tipos + .validate()
+    server/
+      operations/  ← interfaces de operación</code></pre>
+      <p>Los handlers importan directamente desde <code>models_0.ts</code>, por lo que el nuevo tipo estará disponible en el siguiente <code>cdk deploy</code> sin copiar nada manualmente.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ ETAPA 3 -->
+<section id="etapa3">
+  <h2>🧑‍💻 Etapa 3 — Adaptar el Lambda handler</h2>
+  <p><strong>Directorio:</strong> <code>infrastructure/lambda/handlers/</code></p>
+
+  <p>Los handlers importan los tipos y validadores directamente desde el código generado por Smithy:</p>
+  <pre><code>import { CreateChirpInput } from '../../../../smithy/generated/source/typescript-server-codegen/src/models/models_0';
+
+export const handler = async (event) => {
+  const input = parseBody&lt;CreateChirpInput&gt;(event.body);
+
+  // Validación automática — generada por Smithy
+  const failures = CreateChirpInput.validate(input);
+  if (failures.length > 0) return badRequest('Validation error', failures);
+
+  // ... lógica de negocio
+};</code></pre>
+
+  <h3>¿Cuándo hay que editar el handler?</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tipo de cambio en Smithy</th><th>¿Editar handler?</th><th>Motivo</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Nueva restricción en campo existente (ej: <code>@length</code>)</td>
+          <td><span class="tag tag-green">No</span></td>
+          <td><code>.validate()</code> se actualiza automáticamente</td>
+        </tr>
+        <tr>
+          <td>Nuevo campo <strong>opcional</strong> en una estructura</td>
+          <td><span class="tag tag-yellow">Opcional</span></td>
+          <td>Solo si quieres usar ese campo en la lógica</td>
+        </tr>
+        <tr>
+          <td>Nuevo campo <strong>requerido</strong> en una estructura</td>
+          <td><span class="tag tag-red">Sí</span></td>
+          <td>TypeScript marcará el error de compilación</td>
+        </tr>
+        <tr>
+          <td>Nueva operación completa (nuevo endpoint)</td>
+          <td><span class="tag tag-red">Sí</span></td>
+          <td>Crear handler + registrar en CDK</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Si agregas una operación completamente nueva</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">A</div>
+      <div class="step-body">
+        <h4>Crear el handler</h4>
+        <p><code>infrastructure/lambda/handlers/&lt;grupo&gt;/&lt;nombreOperacion&gt;.ts</code></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">B</div>
+      <div class="step-body">
+        <h4>Registrar la función Lambda</h4>
+        <p>Agregar <code>def('nombreOperacion', '&lt;grupo&gt;/&lt;nombreOperacion&gt;.ts')</code> en <code>infrastructure/lib/constructs/chirp-lambdas.ts</code> y asignarle permisos DynamoDB.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">C</div>
+      <div class="step-body">
+        <h4>Agregar la ruta en API Gateway</h4>
+        <p>Agregar <code>this.api.addRoutes({ path: '...', ... })</code> en <code>infrastructure/lib/constructs/chirp-api.ts</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ ETAPA 4 -->
+<section id="etapa4">
+  <h2>🚀 Etapa 4 — Deploy con CDK</h2>
+  <p><strong>Directorio:</strong> <code>infrastructure/</code></p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-top:0">Comandos de deploy</h3>
+      <pre><code># Primera vez en una cuenta nueva (una vez por cuenta/región)
+npx cdk bootstrap aws://ACCOUNT_ID/REGION
+
+# Deploy completo
+npx cdk deploy
+
+# Ver qué cambiaría sin desplegar
+npx cdk diff
+
+# Verificar que el template se genera sin errores
+npx cdk synth
+
+# Destruir todos los recursos de AWS
+npx cdk destroy</code></pre>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Qué ocurre internamente</h3>
+      <ol style="padding-left:1.2rem;color:var(--muted);font-size:.9rem;line-height:2">
+        <li><code>cdk synth</code> genera el template CloudFormation</li>
+        <li><code>esbuild</code> bundlea cada handler en un <code>index.js</code> minificado</li>
+        <li>CDK compara hashes de los zips con AWS</li>
+        <li><strong>Solo sube los Lambdas que cambiaron</strong></li>
+        <li>CloudFormation actualiza las funciones Lambda</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#fbbf2466">
+    <h3 style="margin-top:0;color:var(--yellow)">⚠️ Nota para Windows</h3>
+    <p>Si el primer intento falla con <code>EPERM: operation not permitted</code>, vuelve a ejecutar el mismo comando. El antivirus escanea los archivos recién instalados y los libera al segundo intento. En Linux/Mac esto no ocurre.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ COMANDOS -->
+<section id="comandos">
+  <h2>⚡ Resumen de comandos por caso</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Situación</th><th>Comandos</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Solo cambié lógica de negocio en un handler</td>
+          <td><pre style="margin:0"><code>cd infrastructure
+npx cdk deploy</code></pre></td>
+        </tr>
+        <tr>
+          <td>Cambié una restricción Smithy (ej: <code>@length</code>)</td>
+          <td><pre style="margin:0"><code>cd smithy && .\gradlew.bat build
+cd infrastructure && npx cdk deploy</code></pre></td>
+        </tr>
+        <tr>
+          <td>Agregué un campo nuevo a una estructura</td>
+          <td><pre style="margin:0"><code>cd smithy && .\gradlew.bat build
+# editar handler si es necesario
+cd infrastructure && npx cdk deploy</code></pre></td>
+        </tr>
+        <tr>
+          <td>Agregué un endpoint completamente nuevo</td>
+          <td><pre style="margin:0"><code>cd smithy && .\gradlew.bat build
+# crear handler + actualizar chirp-lambdas.ts y chirp-api.ts
+cd infrastructure && npx cdk deploy</code></pre></td>
+        </tr>
+        <tr>
+          <td>Verificar qué recursos crearía el deploy</td>
+          <td><pre style="margin:0"><code>cd infrastructure && npx cdk diff</code></pre></td>
+        </tr>
+        <tr>
+          <td>Eliminar todos los recursos de AWS</td>
+          <td><pre style="margin:0"><code>cd infrastructure && npx cdk destroy</code></pre></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#1a1d27',
+      primaryColor: '#4f8ef7',
+      primaryTextColor: '#e2e8f0',
+      lineColor: '#4a5568',
+      fontSize: '13px'
+    }
+  });
+</script>
+</body>
+</html>

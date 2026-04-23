@@ -69,3 +69,37 @@ string ChirpContent
 /// Username (3-30 caracteres alfanuméricos, guiones y underscore)
 @pattern("^[a-zA-Z0-9_-]{3,30}$")
 string Username
+
+/// Nombre de visualización del perfil (1-100 caracteres)
+@length(min: 1, max: 100)
+string DisplayName
+
+/// Biografía del perfil (0-160 caracteres)
+@length(min: 0, max: 160)
+string Bio
+
+/// URL de avatar/imagen de perfil
+@pattern("^https?://.+$")
+string AvatarUrl
+
+/// Token opaco de paginación (cursor)
+string PaginationToken
+
+/// Número de elementos por página (1-100)
+@range(min: 1, max: 100)
+integer PageSize
+
+/// Contenido de un comentario (1-280 caracteres)
+@length(min: 1, max: 280)
+string CommentContent
+
+/// Error de conflicto (recurso ya existe)
+@error("client")
+@httpError(409)
+structure ConflictError {
+    @required
+    message: String
+
+    @required
+    resourceType: String
+}
