@@ -14,7 +14,7 @@
     "@types/aws-lambda": "^8.10.161",
     "@types/jest": "^30",
     "@types/node": "^24.10.1",
-    "aws-cdk": "2.1114.1",
+    "aws-cdk": "^2.1119.0",
     "esbuild": "^0.28.0",
     "jest": "^30",
     "ts-jest": "^29",
@@ -27,7 +27,7 @@
     "@aws-sdk/lib-dynamodb": "^3.1024.0",
     "@aws-smithy/server-common": "^1.0.0-alpha.10",
     "@smithy/smithy-client": "^4.12.12",
-    "aws-cdk-lib": "^2.244.0",
+    "aws-cdk-lib": "^2.251.0",
     "constructs": "^10.5.0",
     "uuid": "^13.0.0"
   }

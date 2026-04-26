@@ -1,0 +1,66 @@
+name: cd_deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'infrastructure/**'
+      - 'smithy/**'
+      - '.github/workflows/cd_deploy.yaml'
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: cd-deploy-main
+  cancel-in-progress: false
+
+jobs:
+  deploy-infrastructure:
+    name: Deploy infraestructura CDK
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: ./infrastructure
+
+    steps:
+      - name: Obtener codigo fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 21 (requerido por Smithy)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Generar codigo TypeScript desde Smithy
+        working-directory: ./smithy
+        run: ./gradlew clean build
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: ./infrastructure/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar TypeScript
+        run: npm run build
+
+      - name: Sintetizar stack CDK
+        run: npx cdk synthesize
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Desplegar stack CDK
+        run: npx cdk deploy --require-approval never

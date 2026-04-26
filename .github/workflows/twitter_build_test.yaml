@@ -1,157 +1,17 @@
-# Archivo de configuracion de GitHub Actions para el proyecto Twitter/Chirp
-#Solo para realizar pruebas 
-# Pipeline CI/CD para el Proyecto Twitter/Chirp
-name: twitter_build_test
+name: twitter_build_test_legacy
+
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  # ================== Trabajo 1: Compilar y probar infraestructura CDK ==================
-  infrastructure-build-test:
-    name: Infraestructura CDK - Compilacion y Pruebas
+  moved-to-new-workflows:
+    name: Workflow legado (solo informativo)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./infrastructure
-
     steps:
-    - name: Obtener codigo fuente
-      uses: actions/checkout@v4
-
-    - name: Configurar Java 21 (requerido por Smithy)
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-
-    - name: Generar codigo TypeScript desde modelos Smithy
-      working-directory: ./smithy
-      run: ./gradlew clean build
-
-    - name: Configurar Node.js 20
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: './infrastructure/package-lock.json'
-
-    - name: Instalar dependencias
-      run: npm ci
-
-    - name: Compilar TypeScript
-      run: npm run build
-    
-    - name: Ejecutar pruebas CDK con cobertura
-      run: npm test -- --coverage
-    
-    - name: Validar sintesis del stack CDK
-      run: npx cdk synthesize
-
-  # ================== Trabajo 2: Validar modelos Smithy ==================
-  smithy-validation:
-    name: Smithy - Validacion de Modelos API
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./smithy
-    
-    steps:
-    - name: Obtener codigo fuente
-      uses: actions/checkout@v4
-    
-    - name: Configurar Java 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-    
-    - name: Compilar y validar modelos Smithy
-      run: ./gradlew clean build
-    
-    - name: Ejecutar linters de Smithy
-      run: ./gradlew smithyBuild
-
-  # ================== Trabajo 3: Verificar documentacion ==================
-  documentation-check:
-    name: Documentacion - Verificacion de archivos
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Obtener codigo fuente
-      uses: actions/checkout@v4
-    
-    - name: Verificar archivos de documentacion requeridos
-      run: |
-        if [ ! -f ./docs/PROYECTO\ CHIRP.md ]; then
-          echo "ERROR: Falta el archivo PROYECTO CHIRP.md"
-          exit 1
-        fi
-        if [ ! -f ./docs/PlanDeTrabajo.md ]; then
-          echo "ERROR: Falta el archivo PlanDeTrabajo.md"
-          exit 1
-        fi
-        if [ ! -f ./infrastructure/README.md ]; then
-          echo "ERROR: Falta el archivo README.md de infraestructura"
-          exit 1
-        fi
-        echo "Todos los archivos de documentacion estan presentes"
-    
-    - name: Verificar sintaxis basica de archivos Markdown
-      run: |
-        for file in docs/*.md infrastructure/*.md; do
-          if [ -f "$file" ]; then
-            echo "Revisando $file..."
-            if ! grep -q "^#" "$file"; then
-              echo "ADVERTENCIA: $file no tiene encabezados"
-            fi
-          fi
-        done
-        echo "Revision de Markdown completada"
-
-  # ================== Trabajo 4: Calidad y seguridad del codigo ==================
-  code-quality:
-    name: Calidad - Auditoria de seguridad
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Obtener codigo fuente
-      uses: actions/checkout@v4
-    
-    - name: Configurar Node.js 20
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: './infrastructure/package-lock.json'
-    
-    - name: Instalar dependencias
-      run: cd infrastructure && npm ci
-    
-    - name: Auditar vulnerabilidades de seguridad (npm audit)
-      run: cd infrastructure && npm audit --audit-level=moderate || true
-    
-    - name: Verificar consistencia del flujo Git
-      run: |
-        echo "✓ Verificacion del flujo Git completada"
-
-  # ================== Trabajo 5: Validacion final del pipeline ==================
-  final-check:
-    name: Validacion Final - Resumen del pipeline
-    runs-on: ubuntu-latest
-    needs: [infrastructure-build-test, smithy-validation, documentation-check, code-quality]
-    
-    steps:
-    - name: Obtener codigo fuente
-      uses: actions/checkout@v4
-    
-    - name: Mostrar resumen de resultados
-      run: |
-        echo "Compilacion y pruebas de infraestructura CDK: EXITOSO"
-        echo "Validacion de modelos Smithy: EXITOSO"
-        echo "Verificacion de documentacion: EXITOSO"
-        echo "Auditoria de calidad y seguridad: EXITOSO"
-        echo "Pipeline completado exitosamente!"
+      - name: Aviso de migracion
+        run: |
+          echo "Este workflow fue reemplazado por:"
+          echo "- ci_validate.yaml (CI: build/test/validaciones)"
+          echo "- cd_deploy.yaml (CD: despliegue)"
+          echo "Ejecuta los nuevos workflows desde la pestaña Actions."
 
