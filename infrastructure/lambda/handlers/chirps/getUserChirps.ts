@@ -1,7 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { internalError, ok } from '../../shared/response';
+import { getRequestUserId, internalError, ok } from '../../shared/response';
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const CHIRPS_TABLE = process.env.CHIRPS_TABLE!;
@@ -11,6 +11,10 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     const targetUserId = event.pathParameters?.['userId'];
     if (!targetUserId) return ok({ chirps: [], nextToken: null });
 
+    // El dueño del perfil puede ver sus propios chirps ocultos; otros no
+    const requesterId = getRequestUserId(event);
+    const isOwner = requesterId === targetUserId;
+
     const limit = parseInt(event.queryStringParameters?.['limit'] ?? '20', 10);
     const nextToken = event.queryStringParameters?.['nextToken'];
 
@@ -18,7 +22,13 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
       TableName: CHIRPS_TABLE,
       IndexName: 'userId-createdAt-index',
       KeyConditionExpression: 'userId = :uid',
-      ExpressionAttributeValues: { ':uid': targetUserId },
+      // Si no es el dueño, filtrar los ocultos directamente en DynamoDB
+      ...(!isOwner ? {
+        FilterExpression: 'attribute_not_exists(isHidden) OR isHidden = :false',
+        ExpressionAttributeValues: { ':uid': targetUserId, ':false': false },
+      } : {
+        ExpressionAttributeValues: { ':uid': targetUserId },
+      }),
       ScanIndexForward: false,
       Limit: limit,
       ...(nextToken ? { ExclusiveStartKey: JSON.parse(Buffer.from(nextToken, 'base64').toString()) } : {}),

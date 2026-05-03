@@ -76,7 +76,6 @@ export class ChirpApi extends Construct {
     new CfnOutput(scope, 'ApiUrl', {
       value: this.api.url ?? '',
       description: 'Chirp API Gateway URL',
-      exportName: 'ChirpApiUrl',
     });
   }
 }

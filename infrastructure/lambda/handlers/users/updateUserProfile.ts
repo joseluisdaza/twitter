@@ -19,7 +19,9 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     const input = parseBody<UpdateUserProfileInput>(event.body);
     if (!input) return badRequest('Request body is required');
 
-    const failures = UpdateUserProfileInput.validate(input);
+    // Inyectar userId del path para satisfacer la validación del modelo Smithy
+    const inputWithUserId = { ...input, userId: targetUserId };
+    const failures = UpdateUserProfileInput.validate(inputWithUserId);
     if (failures.length > 0) return badRequest('Validation error', failures);
 
     const now = new Date().toISOString();

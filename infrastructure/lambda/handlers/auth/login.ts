@@ -1,5 +1,5 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { CognitoIdentityProviderClient, InitiateAuthCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient, InitiateAuthCommand, GetUserCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { LoginInput } from '../../../../smithy/generated/source/typescript-server-codegen/src/models/models_0';
 import { badRequest, internalError, ok, parseBody, unauthorized } from '../../shared/response';
 
@@ -26,12 +26,17 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     const auth = result.AuthenticationResult;
     if (!auth) return unauthorized('Authentication failed');
 
+    // Obtener el sub (userId) del usuario autenticado
+    const userInfo = await cognito.send(new GetUserCommand({ AccessToken: auth.AccessToken! }));
+    const userId = userInfo.UserAttributes?.find(a => a.Name === 'sub')?.Value;
+
     return ok({
       accessToken: auth.AccessToken,
       idToken: auth.IdToken,
       refreshToken: auth.RefreshToken,
       expiresIn: auth.ExpiresIn,
       tokenType: auth.TokenType,
+      userId,
     });
   } catch (err: unknown) {
     const error = err as { name?: string; message?: string };

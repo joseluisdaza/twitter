@@ -1,14 +1,14 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { CognitoIdentityProviderClient, SignUpCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient, SignUpCommand, AdminConfirmSignUpCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { RegisterInput } from '../../../../smithy/generated/source/typescript-server-codegen/src/models/models_0';
 import { badRequest, created, internalError, parseBody } from '../../shared/response';
-import { randomUUID } from 'crypto';
 
 const cognito = new CognitoIdentityProviderClient({});
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const CLIENT_ID = process.env.COGNITO_CLIENT_ID!;
+const USER_POOL_ID = process.env.COGNITO_USER_POOL_ID!;
 const USERS_TABLE = process.env.USERS_TABLE!;
 
 export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
@@ -19,10 +19,10 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     const failures = RegisterInput.validate(input);
     if (failures.length > 0) return badRequest('Validation error', failures);
 
-    const userId = randomUUID();
     const now = new Date().toISOString();
 
-    await cognito.send(new SignUpCommand({
+    // SignUp devuelve UserSub = Cognito sub, que usamos como userId en DynamoDB
+    const signUpResult = await cognito.send(new SignUpCommand({
       ClientId: CLIENT_ID,
       Username: input.email!,
       Password: input.password!,
@@ -31,6 +31,14 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         { Name: 'preferred_username', Value: input.username! },
         { Name: 'custom:displayName', Value: input.displayName ?? input.username! },
       ],
+    }));
+
+    const userId = signUpResult.UserSub!;
+
+    // Auto-confirm user (dev environment — skips email verification)
+    await cognito.send(new AdminConfirmSignUpCommand({
+      UserPoolId: USER_POOL_ID,
+      Username: input.email!,
     }));
 
     await ddb.send(new PutCommand({

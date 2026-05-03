@@ -97,6 +97,9 @@ export class ChirpLambdas extends Construct {
     const getChirpComments = def('getChirpComments', 'comments/getChirpComments.ts');
     const deleteComment    = def('deleteComment',    'comments/deleteComment.ts');
 
+    // Permisos Cognito
+    userPool.grant(register, 'cognito-idp:AdminConfirmSignUp');
+
     // Permisos DynamoDB
     usersTable.grantReadWriteData(login);
     usersTable.grantReadWriteData(register);

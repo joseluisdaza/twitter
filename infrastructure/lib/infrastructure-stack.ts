@@ -5,6 +5,7 @@ import { RemovalPolicy } from 'aws-cdk-lib/core';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { ChirpLambdas } from './constructs/chirp-lambdas';
 import { ChirpApi } from './constructs/chirp-api';
+import { ChirpFrontend } from './constructs/chirp-frontend';
 
 export class InfrastructureStack extends cdk.Stack {
   // Propiedades públicas para acceder a las tablas desde otros stacks si es necesario
@@ -259,6 +260,9 @@ export class InfrastructureStack extends cdk.Stack {
     const userPool = new cognito.UserPool(this, 'ChirpUserPool', {
       userPoolName: 'chirp-user-pool',
 
+      // Permitir que los usuarios se registren ellos mismos
+      selfSignUpEnabled: true,
+
       // Login con email
       signInAliases: {
         email: true,
@@ -404,10 +408,18 @@ export class InfrastructureStack extends cdk.Stack {
     // ========================================================================
     // API GATEWAY
     // ========================================================================
-    new ChirpApi(this, 'ChirpApi', {
+    const chirpApi = new ChirpApi(this, 'ChirpApi', {
       fns: lambdas.fns,
       userPool,
       userPoolClient,
+    });
+
+    // ========================================================================
+    // FRONTEND (S3 + CloudFront)
+    // CDK sube los archivos y genera runtime-config.js con la URL real del API
+    // ========================================================================
+    new ChirpFrontend(this, 'ChirpFrontend', {
+      apiUrl: chirpApi.api.url ?? '',
     });
   }
 }

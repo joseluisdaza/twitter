@@ -20,7 +20,9 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     const input = parseBody<CreateCommentInput>(event.body);
     if (!input) return badRequest('Request body is required');
 
-    const failures = CreateCommentInput.validate(input);
+    // Inyectar chirpId del path para satisfacer la validación del modelo Smithy
+    const inputWithChirpId = { ...input, chirpId };
+    const failures = CreateCommentInput.validate(inputWithChirpId);
     if (failures.length > 0) return badRequest('Validation error', failures);
 
     const commentId = randomUUID();
