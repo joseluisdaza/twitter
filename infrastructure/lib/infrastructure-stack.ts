@@ -259,6 +259,9 @@ export class InfrastructureStack extends cdk.Stack {
     const userPool = new cognito.UserPool(this, 'ChirpUserPool', {
       userPoolName: 'chirp-user-pool',
 
+      // Permitir que los usuarios se registren ellos mismos
+      selfSignUpEnabled: true,
+
       // Login con email
       signInAliases: {
         email: true,
