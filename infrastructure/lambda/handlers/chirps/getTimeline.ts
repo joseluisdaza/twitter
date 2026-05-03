@@ -43,10 +43,13 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     const chirpResults = await Promise.all(chirpQueries);
     const allChirps = chirpResults.flatMap(r => r.Items ?? []);
 
-    // 3. Ordenar por createdAt descendente y aplicar límite
-    allChirps.sort((a, b) => (b['createdAt'] as string).localeCompare(a['createdAt'] as string));
+    // 3. Filtrar chirps ocultos de otros usuarios (el dueño sí puede verlos)
+    const visibleChirps = allChirps.filter(c => !c['isHidden'] || c['userId'] === userId);
 
-    return ok({ chirps: allChirps.slice(0, limit), nextToken: null });
+    // 4. Ordenar por createdAt descendente y aplicar límite
+    visibleChirps.sort((a, b) => (b['createdAt'] as string).localeCompare(a['createdAt'] as string));
+
+    return ok({ chirps: visibleChirps.slice(0, limit), nextToken: null });
   } catch (err) {
     console.error('GetTimeline error:', err);
     return internalError();

@@ -1,0 +1,14 @@
+{
+  "InfrastructureStack": {
+    "UserPoolClientId": "eee9euavbabrrhjl971oe7srg",
+    "UserPoolId": "us-east-1_RXGzscJLg",
+    "ApiUrl": "https://wdpadf9z7j.execute-api.us-east-1.amazonaws.com/",
+    "UsersTableName": "chirp-users",
+    "CommentsTableName": "chirp-comments",
+    "LikesTableName": "chirp-likes",
+    "ChirpsTableName": "chirp-chirps",
+    "UserPoolDomainUrl": "https://chirp-auth-dev.auth.us-east-1.amazoncognito.com",
+    "FollowsTableName": "chirp-follows",
+    "FrontendUrl": "https://d2uue9871wx7uc.cloudfront.net"
+  }
+}

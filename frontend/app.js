@@ -1,5 +1,7 @@
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const API_URL = 'https://wdpadf9z7j.execute-api.us-east-1.amazonaws.com';
+// La URL se inyecta desde runtime-config.js (generado por CDK al deployar).
+// En desarrollo local, runtime-config.js contiene la URL del API Gateway.
+const API_URL = ((window.RUNTIME_CONFIG?.apiUrl) || '').replace(/\/$/, '');
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let state = { token: null, userId: null, username: null, displayName: null };

@@ -18,11 +18,14 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     if (!existing.Item) return notFound('Chirp not found');
     if (existing.Item['userId'] !== userId) return forbidden('Cannot hide another user\'s chirp');
 
+    // Toggle: si estaba oculto lo muestra, si estaba visible lo oculta
+    const newValue = !existing.Item['isHidden'];
+
     await ddb.send(new UpdateCommand({
       TableName: CHIRPS_TABLE,
       Key: { chirpId },
       UpdateExpression: 'SET isHidden = :h, updatedAt = :now',
-      ExpressionAttributeValues: { ':h': true, ':now': new Date().toISOString() },
+      ExpressionAttributeValues: { ':h': newValue, ':now': new Date().toISOString() },
     }));
 
     return noContent();
