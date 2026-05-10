@@ -7,6 +7,7 @@ on:
     paths:
       - 'infrastructure/**'
       - 'smithy/**'
+      - 'frontend/**'
       - '.github/workflows/cd_deploy.yaml'
 
 permissions:
@@ -49,10 +50,18 @@ jobs:
           cache: npm
           cache-dependency-path: ./infrastructure/package-lock.json
 
-      - name: Instalar dependencias
+      - name: Instalar dependencias (infraestructura)
         run: npm ci
 
-      - name: Compilar TypeScript
+      - name: Compilar TypeScript (infraestructura)
+        run: npm run build
+
+      - name: Instalar dependencias (frontend)
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Compilar frontend (esbuild)
+        working-directory: ./frontend
         run: npm run build
 
       - name: Sintetizar stack CDK
