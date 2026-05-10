@@ -4,7 +4,7 @@
 
 [![AWS](https://img.shields.io/badge/AWS-Cloud-orange?logo=amazon-aws)](https://aws.amazon.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20.x-green?logo=node.js)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24.x-green?logo=node.js)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 📋 Table of Contents
@@ -31,10 +31,10 @@
 
 ### Project Goals
 
-- 🚀 **Scalable**: Handle up to 100 QPS with potential for thousands of daily active users
-- ⚡ **Low Latency**: Timeline generation < 400ms at p95
+- 🚀 **Scalable**: Serverless architecture that scales automatically with demand
+- ⚡ **Low Latency**: Optimized DynamoDB queries and on-demand Lambda execution
 - 🔒 **Secure**: JWT-based authentication with AWS Cognito
-- 💰 **Cost-Effective**: Serverless architecture with pay-per-use pricing
+- 💰 **Cost-Effective**: Pay-per-use pricing — no cost when idle
 - 📚 **Well-Documented**: Comprehensive guides for deployment and development
 
 ---
@@ -68,8 +68,8 @@
 
 ### Non-Functional Features
 
-- 🔐 **Security**: Rate limiting (30 chirps/hour), input sanitization, encryption at rest
-- ⚡ **Performance**: 99.9% uptime SLA, optimized DynamoDB queries with GSIs
+- 🔐 **Security**: Rate limiting, input sanitization via Smithy validation, encryption at rest
+- ⚡ **Performance**: Optimized DynamoDB queries with GSIs, fast cold starts via esbuild bundling
 - 📊 **Monitoring**: CloudFormation outputs, AWS CloudWatch integration ready
 - 🔄 **Consistency**: Eventual consistency model (CAP theorem: AP prioritized)
 
@@ -80,49 +80,58 @@
 ```mermaid
 flowchart TB
     subgraph Client["Client Layer"]
-        User[👤 User/Frontend]
+        Browser[👤 Browser]
+    end
+
+    subgraph CDN["Frontend Delivery"]
+        CF[☁️ CloudFront<br/>CDN / HTTPS]
+        S3[(🪣 S3 Bucket<br/>index.html · app.js · style.css)]
     end
 
     subgraph AWS["AWS Cloud"]
         subgraph Auth["Authentication"]
-            Cognito[🔐 AWS Cognito<br/>User Pool<br/>JWT Tokens]
+            Cognito[🔐 AWS Cognito<br/>User Pool<br/>Issues JWT Tokens]
         end
 
         subgraph API["API Layer"]
-            APIGW[🚪 API Gateway<br/>REST API<br/>JWT Validation]
+            APIGW[🚪 API Gateway<br/>HTTP API v2<br/>JWT Authorizer]
         end
 
         subgraph Compute["Compute Layer"]
-            Lambda1[⚡ Auth Lambdas<br/>Login/Logout]
-            Lambda2[⚡ Chirp Lambdas<br/>CRUD Operations]
-            Lambda3[⚡ Social Lambdas<br/>Like/Follow/Comment]
+            LAuth[⚡ Auth Lambdas<br/>register · login · logout]
+            LChirps[⚡ Chirp Lambdas<br/>create · get · delete · hide<br/>like · unlike · comments · timeline]
+            LUsers[⚡ User Lambdas<br/>getUser · updateProfile<br/>getUserByUsername]
+            LSocial[⚡ Follow Lambdas<br/>follow · unfollow<br/>getFollowers · getFollowing]
         end
 
         subgraph Data["Data Layer"]
-            DDB1[(DynamoDB<br/>chirp-users)]
-            DDB2[(DynamoDB<br/>chirp-chirps)]
-            DDB3[(DynamoDB<br/>chirp-follows)]
-            DDB4[(DynamoDB<br/>chirp-likes)]
-            DDB5[(DynamoDB<br/>chirp-comments)]
+            DDB1[(chirp-users)]
+            DDB2[(chirp-chirps)]
+            DDB3[(chirp-follows)]
+            DDB4[(chirp-likes)]
+            DDB5[(chirp-comments)]
         end
     end
 
-    User -->|1. Login Request| Lambda1
-    Lambda1 -->|2. Authenticate| Cognito
-    Cognito -->|3. Return JWT| Lambda1
+    Browser -->|Static assets| CF
+    CF --> S3
 
-    User -->|4. API Request + JWT| APIGW
-    APIGW -->|5. Validate JWT| Cognito
-    APIGW -->|6. Invoke| Lambda2
-    APIGW -->|6. Invoke| Lambda3
+    Browser -->|API Request + JWT| APIGW
+    APIGW -->|Validate JWT| Cognito
+    APIGW --> LAuth
+    APIGW --> LChirps
+    APIGW --> LUsers
+    APIGW --> LSocial
 
-    Lambda2 -->|7. Read/Write| DDB2
-    Lambda3 -->|7. Read/Write| DDB3
-    Lambda3 -->|7. Read/Write| DDB4
-    Lambda3 -->|7. Read/Write| DDB5
-
-    Lambda1 -.->|User Data| DDB1
-    Lambda2 -.->|User Data| DDB1
+    LAuth -->|Authenticate| Cognito
+    LAuth --> DDB1
+    LUsers --> DDB1
+    LChirps --> DDB1
+    LChirps --> DDB2
+    LChirps --> DDB4
+    LChirps --> DDB5
+    LSocial --> DDB1
+    LSocial --> DDB3
 ```
 
 ### Design Decisions
@@ -151,56 +160,122 @@ flowchart TB
 - **Gradle** - Build tool for Smithy compilation
 - **OpenAPI** - Generated from Smithy models
 
+### Frontend
+
+- **Vanilla JS + HTML/CSS** - Static frontend (no framework)
+- **AWS S3** - Static file hosting
+- **AWS CloudFront** - CDN with HTTPS and cache invalidation on deploy
+
 ### Development
 
 - **TypeScript 5.9** - Type-safe development
-- **Node.js 20.x** - Runtime environment
+- **Node.js 24.x** - Runtime environment
 - **Jest** - Unit testing
 - **AWS SDK v3** - AWS service clients
 
 ### DevOps
 
-- **AWS CLI v2** - Command-line deployment
+- **GitHub Actions** - CI/CD pipelines (validate + deploy)
+- **AWS OIDC** - Keyless authentication from GitHub Actions to AWS
 - **CDK CLI** - Infrastructure deployment
+- **Git Submodules** - Multi-repo management
 - **Git** - Version control
 
 ---
 
 ## 📁 Project Structure
 
+This project is split across **three repositories** managed via Git Submodules:
+
+| Repository | Description | URL |
+|---|---|---|
+| **twitter** (this repo) | AWS CDK infrastructure + Lambda handlers | *(this repo)* |
+| **Twitter-core** | Smithy API models (submodule → `smithy/`) | [joseluisdaza/Twitter-core](https://github.com/joseluisdaza/Twitter-core) |
+| **Twitter-frontend** | Static frontend assets (submodule → `frontend/`) | [joseluisdaza/Twitter-frontend](https://github.com/joseluisdaza/Twitter-frontend) |
+
 ```
-twitter/
-├── docs/                                    # Documentation
-│   ├── 01_Comandos_AWS_Base_Datos.md       # AWS CLI commands guide
-│   ├── 02_API_Smithy_Lambda_Cognito.md     # API implementation guide
-│   ├── PlanDeTrabajo.md                     # Work plan
-│   ├── PROYECTO CHIRP.md                    # Technical design document
-│   └── Rubrica_Parte1.md                    # Phase 1 rubric
+twitter/                                     # CDK Infrastructure repo (this repo)
+├── .gitmodules                              # Submodule configuration
+├── smithy/                                  # → submodule: Twitter-core
+│   ├── model/                               #   Smithy model files (.smithy)
+│   ├── generated/                           #   Generated TypeScript (not in git, run ./gradlew build)
+│   ├── build.gradle                         #   Gradle build config
+│   └── smithy-build.json                    #   Smithy build config
+│
+├── frontend/                                # → submodule: Twitter-frontend
+│   └── dist/                                #   Static assets (index.html, app.js, style.css)
 │
 ├── infrastructure/                          # AWS CDK Infrastructure
-│   ├── bin/
-│   │   └── infrastructure.ts                # CDK app entry point
+│   ├── bin/infrastructure.ts                # CDK app entry point
 │   ├── lib/
-│   │   └── infrastructure-stack.ts          # DynamoDB tables definition
-│   ├── test/
-│   │   └── infrastructure.test.ts           # CDK stack tests
-│   ├── cdk.json                             # CDK configuration
-│   ├── package.json                         # Node.js dependencies
-│   ├── test-data-seeder.js                  # Database seeding script
-│   ├── DEPLOYMENT_GUIDE.md                  # Step-by-step deployment
-│   ├── DYNAMODB_DESIGN.md                   # Database design document
-│   └── README.md                            # Infrastructure overview
+│   │   ├── infrastructure-stack.ts          # Main CDK stack
+│   │   └── constructs/                      # CDK constructs (Lambdas, API, Frontend, DB)
+│   ├── lambda/handlers/                     # Lambda function handlers (TypeScript)
+│   ├── scripts/deploy-frontend.mjs          # Frontend deploy + CloudFront invalidation
+│   ├── test/                                # CDK stack tests (Jest)
+│   └── package.json                         # Node.js dependencies
 │
-└── smithy/                                  # Smithy API Models
-    ├── model/                               # Smithy model files
-    │   ├── main.smithy                      # Main service definition
-    │   ├── auth.smithy                      # Authentication operations
-    │   ├── chirps.smithy                    # Chirp CRUD operations
-    │   └── common.smithy                    # Shared types & errors
-    ├── build.gradle                         # Gradle build config
-    ├── smithy-build.json                    # Smithy build config
-    └── package.json                         # Smithy dependencies
+└── docs/                                    # Documentation
+    ├── 03_FLUJO_DESARROLLO_Y_ARQUITECTURA.html  # Development workflow guide
+    ├── PROYECTO CHIRP.md                    # Technical design document
+    └── ...
 ```
+
+---
+
+## 🔀 Repository Architecture (Git Submodules)
+
+The project uses **Git Submodules** to keep the three repositories independent while allowing the CDK repo to reference exact versions of each.
+
+### How it works
+
+```
+twitter/ (CDK repo)
+├── smithy/    → pinned to a specific commit of Twitter-core
+└── frontend/  → pinned to a specific commit of Twitter-frontend
+```
+
+The CDK repo stores a **pointer** (commit SHA) to each submodule. When you clone or checkout, git fetches exactly those commits.
+
+### Working with submodules
+
+```bash
+# Clone everything at once
+git clone --recurse-submodules <repository-url>
+
+# Already cloned? Initialize submodules
+git submodule update --init --recursive
+
+# Pull latest from both submodules
+git submodule update --remote --recursive
+```
+
+### Making changes to Smithy models or Frontend
+
+Changes to `smithy/` or `frontend/` must be committed in their own repos first, then the pointer in this repo updated:
+
+```bash
+# Example: updating the frontend
+cd frontend
+git add dist/
+git commit -m "Description of change"
+git push origin main
+
+# Update the pointer in the CDK repo
+cd ..
+git add frontend
+git commit -m "Update frontend submodule"
+git push origin main
+```
+
+### CI/CD Pipeline
+
+The GitHub Actions workflows use `submodules: recursive` to automatically pull both submodules on every run. Authentication to AWS uses **OIDC** (no stored AWS keys):
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `ci_validate` | Push / PR to `main` | Builds Smithy, runs CDK tests, checks docs |
+| `cd_deploy` | Push to `main` | Deploys full stack to AWS via `cdk deploy` |
 
 ---
 
@@ -208,18 +283,18 @@ twitter/
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** v20.x or higher ([Download](https://nodejs.org/))
+- **Node.js** v24.x or higher ([Download](https://nodejs.org/))
 - **AWS CLI** v2.x ([Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
 - **AWS Account** with appropriate permissions
 - **Git** for version control
-- **Java JDK 11+** (for Smithy/Gradle builds)
+- **Java JDK 21+** (for Smithy/Gradle builds)
 
 ### Verification Commands
 
 ```bash
 # Check Node.js version
 node --version
-# Expected: v20.x.x
+# Expected: v24.x.x
 
 # Check AWS CLI version
 aws --version
@@ -341,64 +416,72 @@ For detailed step-by-step deployment instructions, see:
 ### Quick Deploy Commands
 
 ```bash
-# Deploy DynamoDB infrastructure
+# Build Smithy models (generates TypeScript types)
+cd smithy
+./gradlew build
+
+# Deploy full infrastructure (DynamoDB, Lambda, API Gateway, Cognito, CloudFront)
 cd infrastructure
 npm run build
 npx cdk deploy
 
-# Build Smithy API models
-cd ../smithy
-./gradlew build
-
-# Deploy Lambda functions (coming soon)
-# cd ../lambda
-# npm run deploy
+# Deploy frontend to S3 + invalidate CloudFront cache
+node scripts/deploy-frontend.mjs
 ```
 
 ### Deployment Checklist
 
 - [ ] AWS credentials configured (`aws configure`)
-- [ ] CDK bootstrapped for your account
-- [ ] Infrastructure deployed (`cdk deploy`)
-- [ ] Smithy models compiled (`gradlew build`)
-- [ ] Lambda functions deployed (Phase 2)
-- [ ] API Gateway configured (Phase 2)
-- [ ] Cognito User Pool created (Phase 2)
+- [ ] CDK bootstrapped for your account (`npx cdk bootstrap`)
+- [ ] Smithy models compiled (`./gradlew build`)
+- [ ] Infrastructure deployed (`npx cdk deploy`)
+- [ ] Frontend deployed (`node scripts/deploy-frontend.mjs`)
 
 ---
 
 ## 🔌 API Endpoints
 
-### Current Status: Phase 1 (In Progress)
+### Current Status: ✅ Deployed
 
-The API is defined using Smithy and will be implemented with AWS Lambda + API Gateway.
-
-### Planned Endpoints
+All endpoints are implemented with AWS Lambda + API Gateway and live in production.
 
 #### Authentication
 
-| Endpoint       | Method | Description | Auth Required |
-| -------------- | ------ | ----------- | ------------- |
-| `/auth/login`  | POST   | User login  | ❌ No         |
-| `/auth/logout` | POST   | User logout | ✅ Yes        |
+| Endpoint           | Method | Description     | Auth Required |
+| ------------------ | ------ | --------------- | ------------- |
+| `/auth/register`   | POST   | Register user   | ❌ No         |
+| `/auth/login`      | POST   | User login      | ❌ No         |
+| `/auth/logout`     | POST   | User logout     | ✅ Yes        |
 
 #### Chirps
 
-| Endpoint            | Method | Description       | Auth Required  |
-| ------------------- | ------ | ----------------- | -------------- |
-| `/chirps`           | POST   | Create a chirp    | ✅ Yes         |
-| `/chirps/{id}`      | GET    | Get chirp details | ❌ No          |
-| `/chirps/{id}/like` | POST   | Like a chirp      | ✅ Yes         |
-| `/chirps/{id}/like` | DELETE | Unlike a chirp    | ✅ Yes         |
-| `/chirps/{id}/hide` | POST   | Hide a chirp      | ✅ Yes (owner) |
+| Endpoint                    | Method | Description          | Auth Required  |
+| --------------------------- | ------ | -------------------- | -------------- |
+| `/chirps`                   | POST   | Create a chirp       | ✅ Yes         |
+| `/chirps/{id}`              | GET    | Get chirp details    | ✅ Yes         |
+| `/chirps/{id}`              | DELETE | Delete a chirp       | ✅ Yes (owner) |
+| `/chirps/{id}/hide`         | POST   | Hide/show a chirp    | ✅ Yes (owner) |
+| `/chirps/{id}/like`         | POST   | Like a chirp         | ✅ Yes         |
+| `/chirps/{id}/like`         | DELETE | Unlike a chirp       | ✅ Yes         |
+| `/chirps/{id}/likes`        | GET    | Get chirp likes      | ✅ Yes         |
+| `/chirps/{id}/comments`     | GET    | Get chirp comments   | ✅ Yes         |
+| `/chirps/{id}/comments`     | POST   | Add a comment        | ✅ Yes         |
+| `/chirps/{id}/comments/{c}` | DELETE | Delete a comment     | ✅ Yes (owner) |
+| `/timeline`                 | GET    | Personalized feed    | ✅ Yes         |
 
 #### Users & Social
 
-| Endpoint                   | Method | Description           | Auth Required |
-| -------------------------- | ------ | --------------------- | ------------- |
-| `/users/{username}`        | GET    | Get user profile      | ❌ No         |
-| `/users/{username}/follow` | POST   | Follow a user         | ✅ Yes        |
-| `/timeline`                | GET    | Get personalized feed | ✅ Yes        |
+| Endpoint                      | Method | Description              | Auth Required |
+| ----------------------------- | ------ | ------------------------ | ------------- |
+| `/users/{id}`                 | GET    | Get user by ID           | ✅ Yes        |
+| `/users/{id}`                 | PUT    | Update user profile      | ✅ Yes (own)  |
+| `/users/by-username/{u}`      | GET    | Get user by username     | ✅ Yes        |
+| `/users/{id}/chirps`          | GET    | Get user's chirps        | ✅ Yes        |
+| `/users/{id}/likes`           | GET    | Get user's liked chirps  | ✅ Yes        |
+| `/users/{id}/follow`          | POST   | Follow a user            | ✅ Yes        |
+| `/users/{id}/follow`          | DELETE | Unfollow a user          | ✅ Yes        |
+| `/users/{id}/followers`       | GET    | Get user's followers     | ✅ Yes        |
+| `/users/{id}/following`       | GET    | Get users followed       | ✅ Yes        |
 
 ### Example Request (Login)
 
@@ -597,9 +680,10 @@ cd ../smithy
 
 ### Code Structure
 
-- **Infrastructure Code**: [infrastructure/lib/infrastructure-stack.ts](infrastructure/lib/infrastructure-stack.ts)
-- **Smithy Models**: [smithy/model/](smithy/model/)
-- **Lambda Functions**: Coming in Phase 2
+- **Infrastructure Code**: [infrastructure/lib/](infrastructure/lib/) — CDK stack and constructs
+- **Lambda Handlers**: [infrastructure/lambda/handlers/](infrastructure/lambda/handlers/) — one file per endpoint
+- **Smithy Models**: [smithy/model/](smithy/model/) — API definition (Twitter-core submodule)
+- **Frontend**: [frontend/dist/](frontend/dist/) — static assets (Twitter-frontend submodule)
 
 ### Testing
 
@@ -663,27 +747,28 @@ API_GATEWAY_URL=https://xxxxxx.execute-api.us-east-1.amazonaws.com
 
 ### Load Testing (Future)
 
-- Target: 100 QPS sustained
-- Timeline latency < 400ms at p95
-- 500-1000 DAU simulation
+- Sustained load testing with realistic user simulation
+- Timeline latency benchmarking under concurrent requests
+- Stress testing DynamoDB GSI query performance
 
 ---
 
 ## 📊 Cost Estimation
 
-### Monthly Cost Breakdown (500 DAU)
+### Cost Model
 
-| Service              | Usage                       | Cost             |
-| -------------------- | --------------------------- | ---------------- |
-| DynamoDB (On-Demand) | ~10,000 reads, 1,000 writes | $0.50            |
-| Lambda               | 50,000 invocations          | $0.10            |
-| API Gateway          | 50,000 requests             | $0.05            |
-| Cognito              | 500 MAU                     | FREE             |
-| CloudWatch Logs      | 1 GB logs                   | $0.50            |
-| Data Transfer        | 5 GB outbound               | $0.45            |
-| **TOTAL**            | -                           | **~$1.60/month** |
+All services use **pay-per-use** pricing — the cost scales directly with usage and is effectively $0 when idle.
 
-> AWS Free Tier covers most development usage for the first 12 months
+| Service              | Billing Model         | Free Tier                          |
+| -------------------- | --------------------- | ---------------------------------- |
+| DynamoDB (On-Demand) | Per read/write        | 25 GB storage, 200M requests/month |
+| Lambda               | Per invocation + time | 1M invocations/month               |
+| API Gateway          | Per request           | 1M requests/month                  |
+| Cognito              | Per MAU               | 50,000 MAU/month                   |
+| CloudFront + S3      | Per GB transferred    | 1 TB transfer/month                |
+| CloudWatch Logs      | Per GB ingested       | 5 GB ingestion/month               |
+
+> For accurate cost estimates based on your actual usage, use the [AWS Pricing Calculator](https://calculator.aws/).
 
 ---
 
@@ -697,21 +782,32 @@ API_GATEWAY_URL=https://xxxxxx.execute-api.us-east-1.amazonaws.com
 - [x] Test data seeding script
 - [x] Comprehensive documentation
 
-### 🚧 Phase 2: API & Authentication (IN PROGRESS)
+### ✅ Phase 2: API & Authentication (COMPLETED)
 
-- [ ] AWS Cognito User Pool setup
-- [ ] Lambda functions for all endpoints
-- [ ] API Gateway configuration
-- [ ] JWT token validation
-- [ ] Rate limiting implementation
+- [x] AWS Cognito User Pool setup
+- [x] Lambda functions for all endpoints (23 handlers)
+- [x] API Gateway configuration
+- [x] JWT token validation
+- [x] CI/CD pipeline (GitHub Actions + AWS OIDC)
+- [x] Multi-repo architecture (Git Submodules)
 
-### 📅 Phase 3: Frontend & Features (PLANNED)
+### ✅ Phase 3: Frontend (COMPLETED)
 
-- [ ] React/Next.js frontend
-- [ ] Real-time timeline updates (WebSockets)
+- [x] Static frontend (HTML/CSS/JS) deployed to S3 + CloudFront
+- [x] Authentication (register, login, logout)
+- [x] Timeline with refresh button
+- [x] Chirp creation, deletion, hiding, likes
+- [x] Comments with user name resolution
+- [x] User profiles and search
+- [x] Follow/unfollow users
+
+### 📅 Phase 4: Advanced Features (PLANNED)
+
+- [ ] Real-time updates (WebSockets / SSE)
 - [ ] Media upload (S3 integration)
-- [ ] Search functionality
 - [ ] Notifications system
+- [ ] Trending topics algorithm
+- [ ] Direct messaging
 
 ### 🔮 Phase 4: Advanced Features (FUTURE)
 
