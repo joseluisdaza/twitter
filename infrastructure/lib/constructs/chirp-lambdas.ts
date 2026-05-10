@@ -46,6 +46,14 @@ export class ChirpLambdas extends Construct {
         NODE_PATH: path.join(__dirname, '../../node_modules'),
       },
       tsconfig: path.join(__dirname, '../../tsconfig.json'),
+      commandHooks: {
+        beforeBundling: () => [],
+        beforeInstall: () => [],
+        // re2-wasm ships a binary .wasm file that esbuild cannot bundle — copy it next to index.js
+        afterBundling: (_inputDir: string, outputDir: string) => [
+          `cp ${path.join(__dirname, '../../node_modules/re2-wasm/build/wasm/re2.wasm')} ${outputDir}/re2.wasm`,
+        ],
+      },
     };
 
     const def = (name: string, entryRelPath: string) => {
