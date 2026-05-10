@@ -1,0 +1,6 @@
+[submodule "smithy"]
+	path = smithy
+	url = https://github.com/joseluisdaza/Twitter-core.git
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/joseluisdaza/Twitter-frontend.git

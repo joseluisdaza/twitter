@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Obtener codigo fuente
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Configurar Java 21 (requerido por Smithy)
         uses: actions/setup-java@v4
