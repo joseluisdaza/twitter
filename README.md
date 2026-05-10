@@ -240,9 +240,23 @@ aws configure
 
 ### 1. Clone the Repository
 
+This repository uses **git submodules** for the Smithy models ([Twitter-core](https://github.com/joseluisdaza/Twitter-core)) and the frontend ([Twitter-frontend](https://github.com/joseluisdaza/Twitter-frontend)). You must clone with `--recurse-submodules` to get everything:
+
 ```bash
-git clone <repository-url>
+git clone --recurse-submodules <repository-url>
 cd twitter
+```
+
+If you already cloned without the flag, run this to download the submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
+To update the submodules to their latest version in the future:
+
+```bash
+git submodule update --remote --recursive
 ```
 
 ### 2. Install Dependencies

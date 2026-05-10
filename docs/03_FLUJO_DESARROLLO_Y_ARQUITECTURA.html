@@ -280,6 +280,38 @@ flowchart TB
   </div>
 </section>
 
+<!-- ═══════════════════════════════════════════════════════ SETUP -->
+<section id="setup">
+  <h2>⚙️ Configuración inicial del repositorio</h2>
+  <p>Este repositorio usa <strong>git submodules</strong> para los modelos Smithy (<a href="https://github.com/joseluisdaza/Twitter-core" target="_blank">Twitter-core</a>) y el frontend (<a href="https://github.com/joseluisdaza/Twitter-frontend" target="_blank">Twitter-frontend</a>). Es necesario clonar con el flag <code>--recurse-submodules</code> para obtener todo el código.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-top:0">Clonar por primera vez</h3>
+      <pre><code># Clona el repo CDK + ambos submodules de una vez
+git clone --recurse-submodules &lt;repository-url&gt;
+cd twitter</code></pre>
+      <p>Si ya clonaste sin el flag, ejecuta:</p>
+      <pre><code>git submodule update --init --recursive</code></pre>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Actualizar submodules</h3>
+      <p>Cuando haya cambios nuevos en <code>Twitter-core</code> o <code>Twitter-frontend</code> y quieras traerlos al repo CDK:</p>
+      <pre><code>git submodule update --remote --recursive</code></pre>
+      <p>Luego commiteá el puntero actualizado en el repo CDK:</p>
+      <pre><code>git add smithy frontend
+git commit -m "Update submodules to latest"</code></pre>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#fbbf2466">
+    <h3 style="margin-top:0;color:var(--yellow)">⚠️ El código generado de Smithy no está en git</h3>
+    <p>La carpeta <code>smithy/generated/</code> está en el <code>.gitignore</code> de <code>Twitter-core</code> — se regenera en cada build. Antes de correr <code>cdk synth</code> o <code>cdk deploy</code> localmente, asegurate de haber ejecutado:</p>
+    <pre><code>cd smithy && ./gradlew build</code></pre>
+    <p>El pipeline de CI/CD hace esto automáticamente en cada ejecución.</p>
+  </div>
+</section>
+
 <!-- ═══════════════════════════════════════════════════════ FLUJO -->
 <section id="flujo">
   <h2>🔄 Flujo de desarrollo</h2>
@@ -288,21 +320,23 @@ flowchart TB
   <div class="diagram-box">
     <div class="mermaid">
 flowchart LR
-    A(["📝 1\nEditar\n.smithy"])
+    A(["📝 1\nEditar\n.smithy\nTwitter-core"])
     B(["⚙️ 2\nGradle Build\n./gradlew build"])
-    C(["📦 3\nmodels_0.ts\nregenerado"])
+    C(["📦 3\nCommit &amp; push\nTwitter-core"])
     D(["🧑‍💻 4\nAdaptar handler\nsi es necesario"])
-    E(["🚀 5\nnpx cdk deploy"])
-    F(["☁️ 6\nLambda\nactualizado"])
+    E(["🔗 5\nActualizar\nsubmodule CDK"])
+    F(["🚀 6\nnpx cdk deploy"])
+    G(["☁️ 7\nLambda\nactualizado"])
 
-    A --> B --> C --> D --> E --> F
+    A --> B --> C --> D --> E --> F --> G
 
     style A fill:#4f8ef7,color:#fff,stroke:none
     style B fill:#7c3aed,color:#fff,stroke:none
     style C fill:#a78bfa,color:#fff,stroke:none
     style D fill:#065f46,color:#fff,stroke:none
-    style E fill:#0369a1,color:#fff,stroke:none
-    style F fill:#92400e,color:#fff,stroke:none
+    style E fill:#0f766e,color:#fff,stroke:none
+    style F fill:#0369a1,color:#fff,stroke:none
+    style G fill:#92400e,color:#fff,stroke:none
     </div>
   </div>
 
@@ -310,26 +344,48 @@ flowchart LR
     <div class="step">
       <div class="step-num">1</div>
       <div class="step-body">
-        <h4>Editar los modelos Smithy</h4>
-        <p>Los archivos <code>.smithy</code> en <code>smithy/model/</code> definen el API — operaciones, estructuras, validaciones y errores. Son independientes de cualquier lenguaje de programación.</p>
+        <h4>Editar los modelos Smithy <span style="font-weight:400;color:var(--muted)">(repo: Twitter-core)</span></h4>
+        <p>Los archivos <code>.smithy</code> en <code>smithy/model/</code> definen el API. Esta carpeta es el submodulo <strong>Twitter-core</strong> — los cambios aquí deben commitearse y pushearse a ese repo por separado.</p>
       </div>
     </div>
     <div class="step">
       <div class="step-num">2</div>
       <div class="step-body">
         <h4>Regenerar código TypeScript con Gradle</h4>
-        <p>El compilador de Smithy lee los <code>.smithy</code> y regenera <code>models_0.ts</code> con los tipos TypeScript y los métodos <code>.validate()</code> para cada estructura.</p>
+        <p>El compilador de Smithy lee los <code>.smithy</code> y regenera <code>models_0.ts</code> con los tipos TypeScript y los métodos <code>.validate()</code>. El resultado queda en <code>smithy/generated/</code> (no trackeado en git).</p>
       </div>
     </div>
     <div class="step">
       <div class="step-num">3</div>
       <div class="step-body">
-        <h4>Adaptar el Lambda handler (si es necesario)</h4>
-        <p>Si agregaste campos nuevos o una operación completamente nueva, el handler TypeScript debe actualizarse para usar esos cambios. Si solo cambiaste una restricción, <code>.validate()</code> se actualiza solo.</p>
+        <h4>Commit y push a Twitter-core</h4>
+        <p>Commiteá los cambios <code>.smithy</code> dentro del directorio <code>smithy/</code> (que es el submodulo). Esto actualiza el repo <strong>Twitter-core</strong> en GitHub.</p>
+        <pre style="margin:.5rem 0 0"><code>cd smithy
+git add model/
+git commit -m "Descripción del cambio"
+git push origin main</code></pre>
       </div>
     </div>
     <div class="step">
       <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Adaptar el Lambda handler (si es necesario)</h4>
+        <p>Si agregaste campos nuevos o una operación completamente nueva, el handler TypeScript en <code>infrastructure/lambda/handlers/</code> debe actualizarse. Si solo cambiaste una restricción, <code>.validate()</code> se actualiza solo.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h4>Actualizar el puntero del submodulo en el repo CDK</h4>
+        <p>El repo CDK guarda una referencia al commit exacto de Twitter-core. Después de pushear a Twitter-core, actualizá ese puntero y commiteá en el repo CDK:</p>
+        <pre style="margin:.5rem 0 0"><code>cd /workspaces/twitter
+git add smithy
+git commit -m "Update smithy submodule"
+git push</code></pre>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">6</div>
       <div class="step-body">
         <h4>Desplegar con CDK</h4>
         <p><code>npx cdk deploy</code> usa esbuild para empaquetar cada handler y solo sube a AWS los Lambdas que cambiaron (comparación por hash).</p>
@@ -341,7 +397,8 @@ flowchart LR
 <!-- ═══════════════════════════════════════════════════════ ETAPA 1 -->
 <section id="etapa1">
   <h2>📝 Etapa 1 — Modificar el modelo Smithy</h2>
-  <p><strong>Directorio:</strong> <code>smithy/model/</code></p>
+  <p><strong>Directorio:</strong> <code>smithy/model/</code> &nbsp;·&nbsp; <strong>Repo:</strong> <a href="https://github.com/joseluisdaza/Twitter-core" target="_blank">Twitter-core</a> (submodulo)</p>
+  <p>Los cambios en esta carpeta pertenecen al repo <strong>Twitter-core</strong>. Debés commitearte y pushear dentro de <code>smithy/</code> antes de que el repo CDK pueda referenciar esos cambios.</p>
 
   <div class="grid-2">
     <div class="card">
@@ -387,14 +444,11 @@ list TagList {
   <div class="grid-2">
     <div class="card">
       <h3 style="margin-top:0">Comando</h3>
-      <pre><code># Windows
-.\gradlew.bat build
-
-# Linux / Mac
+      <pre><code>cd smithy
 ./gradlew build</code></pre>
       <p>Si hay errores en el modelo Smithy, el build falla con mensajes descriptivos antes de tocar ningún archivo TypeScript.</p>
       <pre><code># Limpiar y recompilar desde cero
-.\gradlew.bat clean build</code></pre>
+cd smithy && ./gradlew clean build</code></pre>
     </div>
     <div class="card">
       <h3 style="margin-top:0">Qué se regenera</h3>
@@ -532,24 +586,30 @@ npx cdk destroy</code></pre>
       <thead><tr><th>Situación</th><th>Comandos</th></tr></thead>
       <tbody>
         <tr>
+          <td>Clonar el repositorio por primera vez</td>
+          <td><pre style="margin:0"><code>git clone --recurse-submodules &lt;repository-url&gt;
+cd smithy && ./gradlew build
+cd ../infrastructure && npm install</code></pre></td>
+        </tr>
+        <tr>
           <td>Solo cambié lógica de negocio en un handler</td>
           <td><pre style="margin:0"><code>cd infrastructure
 npx cdk deploy</code></pre></td>
         </tr>
         <tr>
           <td>Cambié una restricción Smithy (ej: <code>@length</code>)</td>
-          <td><pre style="margin:0"><code>cd smithy && .\gradlew.bat build
+          <td><pre style="margin:0"><code>cd smithy && ./gradlew build
 cd infrastructure && npx cdk deploy</code></pre></td>
         </tr>
         <tr>
           <td>Agregué un campo nuevo a una estructura</td>
-          <td><pre style="margin:0"><code>cd smithy && .\gradlew.bat build
+          <td><pre style="margin:0"><code>cd smithy && ./gradlew build
 # editar handler si es necesario
 cd infrastructure && npx cdk deploy</code></pre></td>
         </tr>
         <tr>
           <td>Agregué un endpoint completamente nuevo</td>
-          <td><pre style="margin:0"><code>cd smithy && .\gradlew.bat build
+          <td><pre style="margin:0"><code>cd smithy && ./gradlew build
 # crear handler + actualizar chirp-lambdas.ts y chirp-api.ts
 cd infrastructure && npx cdk deploy</code></pre></td>
         </tr>
