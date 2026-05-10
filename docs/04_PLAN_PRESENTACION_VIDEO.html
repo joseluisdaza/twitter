@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chirp — Plan de Presentación Video</title>
+  <style>
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3352;
+      --accent: #4f8ef7; --accent2: #a78bfa; --green: #34d399; --yellow: #fbbf24;
+      --red: #f87171; --orange: #fb923c; --text: #e2e8f0; --muted: #8892aa; --code-bg: #141720;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.7; }
+    a { color: var(--accent); text-decoration: none; }
+    /* HEADER */
+    header { background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%); border-bottom: 1px solid var(--border); padding: 48px 0 36px; text-align: center; }
+    header h1 { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.5px; }
+    header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: 8px; font-size: 1rem; }
+    .badge { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 0.8rem; color: var(--muted); margin-top: 12px; }
+    /* NAV */
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; gap: 4px; overflow-x: auto; }
+    nav a { color: var(--muted); padding: 14px 16px; font-size: 0.85rem; white-space: nowrap; border-bottom: 2px solid transparent; transition: all .2s; }
+    nav a:hover { color: var(--text); border-bottom-color: var(--accent); }
+    /* MAIN */
+    .container { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
+    /* OVERVIEW */
+    .overview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin: 32px 0; }
+    .presenter-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 16px; text-align: center; cursor: pointer; transition: transform .15s, border-color .15s; }
+    .presenter-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .presenter-card .num { font-size: 1.6rem; margin-bottom: 6px; }
+    .presenter-card .pname { font-weight: 600; font-size: 0.95rem; }
+    .presenter-card .ptopic { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+    .presenter-card .ptime { font-size: 0.7rem; background: var(--surface2); border-radius: 10px; padding: 2px 8px; display: inline-block; margin-top: 8px; color: var(--yellow); }
+    /* SECTIONS */
+    .section { margin-bottom: 64px; }
+    .section-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .section-num { background: var(--accent); color: #fff; font-weight: 700; font-size: 1.1rem; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .section-num.moises { background: #34d399; }
+    .section-num.javier { background: #a78bfa; }
+    .section-num.joseluis { background: #fb923c; }
+    .section-num.jorge { background: #4f8ef7; }
+    .section-num.mauricio { background: #f472b6; }
+    .section-header h2 { font-size: 1.4rem; font-weight: 700; }
+    .section-header .presenter { color: var(--muted); font-size: 0.9rem; }
+    .time-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 0.78rem; color: var(--yellow); margin-left: auto; white-space: nowrap; }
+    /* PARTS */
+    .part { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 14px; }
+    .part-title { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem; margin-bottom: 12px; }
+    .part-min { background: var(--surface2); border-radius: 10px; padding: 2px 10px; font-size: 0.75rem; color: var(--muted); }
+    .part ul { list-style: none; padding: 0; }
+    .part ul li { padding: 4px 0 4px 20px; position: relative; color: var(--muted); font-size: 0.9rem; }
+    .part ul li::before { content: '›'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+    .part ul li strong { color: var(--text); }
+    /* QUOTE */
+    .quote { background: var(--surface2); border-left: 3px solid var(--accent2); border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 14px 0; font-style: italic; color: var(--muted); font-size: 0.9rem; }
+    .quote strong { color: var(--text); font-style: normal; }
+    /* CODE */
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; overflow-x: auto; font-size: 0.82rem; line-height: 1.6; margin: 12px 0; }
+    code { font-family: 'Cascadia Code', 'Fira Code', monospace; }
+    .kw { color: #c792ea; } .fn { color: #82aaff; } .str { color: #c3e88d; }
+    .cm { color: #546e7a; font-style: italic; } .num { color: #f78c6c; }
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.88rem; }
+    th { background: var(--surface2); color: var(--muted); font-weight: 600; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    /* DEMO BOX */
+    .demo-box { background: #0a1628; border: 1px solid #1e3a5f; border-radius: 8px; padding: 16px 20px; margin: 14px 0; }
+    .demo-box .demo-title { color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 10px; }
+    .demo-box ol { padding-left: 20px; color: var(--muted); font-size: 0.88rem; }
+    .demo-box ol li { padding: 3px 0; }
+    /* RELAY */
+    .relay { background: linear-gradient(135deg, var(--surface2) 0%, #1a2040 100%); border: 1px solid var(--accent2); border-radius: 10px; padding: 16px 20px; margin-top: 20px; }
+    .relay .relay-title { color: var(--accent2); font-weight: 600; font-size: 0.82rem; margin-bottom: 6px; }
+    /* TIMELINE BAR */
+    .timeline { display: flex; gap: 0; margin: 24px 0; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .tl-seg { padding: 10px 0; text-align: center; font-size: 0.75rem; font-weight: 600; }
+    .tl-name { font-size: 0.7rem; opacity: .8; }
+    .tl-moises { background: #064e3b; color: #34d399; flex: 5; }
+    .tl-javier { background: #3b0764; color: #a78bfa; flex: 7; }
+    .tl-joseluis { background: #431407; color: #fb923c; flex: 7; }
+    .tl-jorge { background: #1e3a5f; color: #4f8ef7; flex: 10; }
+    .tl-mauricio { background: #500724; color: #f472b6; flex: 7; }
+    /* FOOTER */
+    footer { background: var(--surface); border-top: 1px solid var(--border); padding: 24px 40px; text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 48px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🐦 <span>Chirp</span> — Plan de Presentación</h1>
+  <p>Guía completa para la grabación del video final del proyecto</p>
+  <span class="badge">5 presentadores · ~36 min estimados · AWS Serverless</span>
+</header>
+<nav>
+  <a href="#overview">Visión general</a>
+  <a href="#moises">1 · Moisés</a>
+  <a href="#javier">2 · Javier</a>
+  <a href="#joseluis">3 · José Luis</a>
+  <a href="#jorge">4 · Jorge</a>
+  <a href="#mauricio">5 · Mauricio</a>
+</nav>
+
+<div class="container">
+
+  <!-- ══ OVERVIEW ══════════════════════════════════════════════════════ -->
+  <section id="overview" class="section">
+    <div class="section-header">
+      <div class="section-num" style="background:var(--surface2);color:var(--text);font-size:.9rem;">🗓️</div>
+      <div>
+        <h2>Visión general del video</h2>
+        <span class="presenter">Estructura de los 5 bloques · ~36 minutos estimados</span>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-seg tl-moises">~5 min<br><span class="tl-name">Moisés</span></div>
+      <div class="tl-seg tl-javier">~7 min<br><span class="tl-name">Javier</span></div>
+      <div class="tl-seg tl-joseluis">~7 min<br><span class="tl-name">José Luis</span></div>
+      <div class="tl-seg tl-jorge">~10 min<br><span class="tl-name">Jorge</span></div>
+      <div class="tl-seg tl-mauricio">~7 min<br><span class="tl-name">Mauricio</span></div>
+    </div>
+
+    <div class="overview-grid">
+      <div class="presenter-card" onclick="document.getElementById('moises').scrollIntoView({behavior:'smooth'})">
+        <div class="num">🎙️</div>
+        <div class="pname">Moisés</div>
+        <div class="ptopic">Introducción y requerimientos</div>
+        <span class="ptime">~5 min</span>
+      </div>
+      <div class="presenter-card" onclick="document.getElementById('javier').scrollIntoView({behavior:'smooth'})">
+        <div class="num">🗺️</div>
+        <div class="pname">Javier</div>
+        <div class="ptopic">Diagramas y estructura</div>
+        <span class="ptime">~7 min</span>
+      </div>
+      <div class="presenter-card" onclick="document.getElementById('joseluis').scrollIntoView({behavior:'smooth'})">
+        <div class="num">☁️</div>
+        <div class="pname">José Luis</div>
+        <div class="ptopic">AWS base y DynamoDB / IAM</div>
+        <span class="ptime">~7 min</span>
+      </div>
+      <div class="presenter-card" onclick="document.getElementById('jorge').scrollIntoView({behavior:'smooth'})">
+        <div class="num">⚙️</div>
+        <div class="pname">Jorge</div>
+        <div class="ptopic">Funcionamiento y Smithy</div>
+        <span class="ptime">~10 min</span>
+      </div>
+      <div class="presenter-card" onclick="document.getElementById('mauricio').scrollIntoView({behavior:'smooth'})">
+        <div class="num">🚀</div>
+        <div class="pname">Mauricio</div>
+        <div class="ptopic">Pipelines y conclusiones</div>
+        <span class="ptime">~7 min</span>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>#</th><th>Presentador</th><th>Tema</th><th>Duración</th><th>Entrega a</th></tr>
+      <tr><td>1</td><td>Moisés</td><td>Introducción, contexto y requerimientos del sistema</td><td>~5 min</td><td>Javier</td></tr>
+      <tr><td>2</td><td>Javier</td><td>Diagramas de arquitectura y estructura multi-repo</td><td>~7 min</td><td>José Luis</td></tr>
+      <tr><td>3</td><td>José Luis</td><td>Configuración AWS base, DynamoDB e IAM</td><td>~7 min</td><td>Jorge</td></tr>
+      <tr><td>4</td><td>Jorge</td><td>Smithy, generación de código y flujo de una request</td><td>~10 min</td><td>Mauricio</td></tr>
+      <tr><td>5</td><td>Mauricio</td><td>Pipelines CI/CD, recomendaciones y conclusiones</td><td>~7 min</td><td>— fin —</td></tr>
+    </table>
+  </section>
+
+  <!-- ══ MOISÉS ══════════════════════════════════════════════════════ -->
+  <section id="moises" class="section">
+    <div class="section-header">
+      <div class="section-num moises">1</div>
+      <div>
+        <h2>Moisés — Introducción y Requerimientos</h2>
+        <span class="presenter">Abre el video · establece el contexto general</span>
+      </div>
+      <span class="time-badge">⏱ ~5 min</span>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🎯 ¿Qué es Chirp? <span class="part-min">1 min</span></div>
+      <ul>
+        <li><strong>Red social estilo Twitter</strong> construida desde cero con tecnologías AWS</li>
+        <li>Proyecto académico que demuestra <strong>arquitectura serverless real</strong> en producción</li>
+        <li>5 desarrolladores · 3 repositorios Git · infraestructura 100% como código</li>
+      </ul>
+    </div>
+
+    <div class="part">
+      <div class="part-title">📋 Requerimientos funcionales <span class="part-min">2 min</span></div>
+      <ul>
+        <li><strong>Autenticación:</strong> registro, inicio y cierre de sesión con JWT</li>
+        <li><strong>Chirps:</strong> publicar, leer, eliminar, ocultar, dar y quitar "me gusta"</li>
+        <li><strong>Comentarios:</strong> crear y eliminar comentarios en chirps</li>
+        <li><strong>Social:</strong> seguir/dejar de seguir usuarios, ver seguidores y seguidos</li>
+        <li><strong>Timeline:</strong> feed personalizado con chirps de los usuarios que sigues</li>
+        <li><strong>Perfiles:</strong> ver y editar información de usuario</li>
+      </ul>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🏗️ Requerimientos no funcionales <span class="part-min">2 min</span></div>
+      <ul>
+        <li><strong>Escalabilidad:</strong> serverless — escala a cero, paga lo que se usa</li>
+        <li><strong>Seguridad:</strong> principio de menor privilegio con IAM, HTTPS en todos los endpoints</li>
+        <li><strong>Type safety:</strong> contrato de API verificado en tiempo de compilación con Smithy</li>
+        <li><strong>Automatización:</strong> despliegue automático vía CI/CD, sin intervención manual en AWS</li>
+      </ul>
+    </div>
+
+    <div class="relay">
+      <div class="relay-title">🎤 PASE A JAVIER</div>
+      <em>"Ahora que tenemos claro qué hace Chirp, Javier nos va a mostrar cómo está estructurado — la arquitectura y cómo organizamos el código entre los tres repositorios."</em>
+    </div>
+  </section>
+
+  <!-- ══ JAVIER ══════════════════════════════════════════════════════ -->
+  <section id="javier" class="section">
+    <div class="section-header">
+      <div class="section-num javier">2</div>
+      <div>
+        <h2>Javier — Diagramas y Estructura</h2>
+        <span class="presenter">Arquitectura del sistema y organización del código</span>
+      </div>
+      <span class="time-badge">⏱ ~7 min</span>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🗂️ Estructura multi-repo con Git Submodules <span class="part-min">2 min</span></div>
+      <ul>
+        <li><strong>twitter</strong> — repo principal: infraestructura CDK + workflows CI/CD</li>
+        <li><strong>Twitter-core</strong> (submodule <code>smithy/</code>) — modelos Smithy, fuente de verdad de la API</li>
+        <li><strong>Twitter-frontend</strong> (submodule <code>frontend/</code>) — app TypeScript/esbuild</li>
+        <li>Cada repo tiene su propio historial y pipeline independiente</li>
+      </ul>
+      <pre><code>twitter/                 <span class="cm"># repo principal (CDK)</span>
+├── infrastructure/      <span class="cm"># stacks y constructs TypeScript</span>
+├── smithy/              <span class="cm"># submodule → Twitter-core</span>
+├── frontend/            <span class="cm"># submodule → Twitter-frontend</span>
+└── .github/workflows/   <span class="cm"># ci_validate.yaml · cd_deploy.yaml</span></code></pre>
+    </div>
+
+    <div class="part">
+      <div class="part-title">☁️ Arquitectura AWS <span class="part-min">3 min</span></div>
+      <ul>
+        <li><strong>S3 + CloudFront:</strong> frontend estático servido globalmente con CDN</li>
+        <li><strong>API Gateway HTTP API:</strong> entry point de las 23 operaciones REST</li>
+        <li><strong>Lambda (Node.js 24):</strong> una función por operación — aisladas e independientes</li>
+        <li><strong>DynamoDB:</strong> tablas por dominio (chirps, users, follows, comments) con GSIs</li>
+        <li><strong>CDK / CloudFormation:</strong> infraestructura declarativa desplegada automáticamente</li>
+      </ul>
+      <pre><code>Usuario → CloudFront → S3 (frontend HTML/CSS/JS)
+Usuario → API Gateway → Lambda → DynamoDB</code></pre>
+    </div>
+
+    <div class="part">
+      <div class="part-title">📦 CDK Constructs <span class="part-min">2 min</span></div>
+      <ul>
+        <li><strong>ChirpFrontend:</strong> S3 bucket + CloudFront OAC + BucketDeployment automático</li>
+        <li><strong>ChirpLambdas:</strong> función Lambda por operación, bundleada con esbuild</li>
+        <li><strong>ChirpDatabase:</strong> tablas DynamoDB con índices secundarios globales</li>
+        <li><strong>ChirpApi:</strong> HTTP API Gateway con rutas mapeadas a cada Lambda</li>
+      </ul>
+    </div>
+
+    <div class="relay">
+      <div class="relay-title">🎤 PASE A JOSÉ LUIS</div>
+      <em>"Ahora que vimos la arquitectura, José Luis nos muestra cómo configuramos AWS desde cero — las tablas de DynamoDB y los roles IAM."</em>
+    </div>
+  </section>
+
+  <!-- ══ JOSÉ LUIS ══════════════════════════════════════════════════ -->
+  <section id="joseluis" class="section">
+    <div class="section-header">
+      <div class="section-num joseluis">3</div>
+      <div>
+        <h2>José Luis — AWS Base y DynamoDB / IAM</h2>
+        <span class="presenter">Configuración de los servicios fundacionales de AWS</span>
+      </div>
+      <span class="time-badge">⏱ ~7 min</span>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🗄️ Tablas DynamoDB <span class="part-min">3 min</span></div>
+      <ul>
+        <li><strong>chirp-users:</strong> PK = <code>userId</code> · GSI por <code>username</code> (lookup por username)</li>
+        <li><strong>chirp-chirps:</strong> PK = <code>chirpId</code> · GSI por <code>userId</code> (chirps de un usuario)</li>
+        <li><strong>chirp-follows:</strong> PK = <code>followerId</code>, SK = <code>followeeId</code> · GSI inverso</li>
+        <li><strong>chirp-comments:</strong> PK = <code>commentId</code> · GSI por <code>chirpId</code> (comentarios de un chirp)</li>
+        <li><strong>chirp-likes:</strong> PK = <code>userId</code>, SK = <code>chirpId</code> (relación muchos a muchos)</li>
+      </ul>
+      <div class="demo-box">
+        <div class="demo-title">💡 Por qué NoSQL para este caso</div>
+        <ol>
+          <li>Las consultas más frecuentes son por ID — O(1) con PK directa</li>
+          <li>Los GSIs permiten consultas por usuario sin hacer scan de toda la tabla</li>
+          <li>DynamoDB escala automáticamente con la carga — sin administración de servidor</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🔐 IAM — Principio de menor privilegio <span class="part-min">2 min</span></div>
+      <ul>
+        <li>Cada Lambda tiene su <strong>propio rol IAM</strong> con solo los permisos que necesita</li>
+        <li><code>createChirp</code> Lambda → solo <code>dynamodb:PutItem</code> en tabla <code>chirp-chirps</code></li>
+        <li><code>getTimeline</code> Lambda → solo <code>dynamodb:Query</code> en tabla <code>chirp-follows</code> + <code>chirp-chirps</code></li>
+        <li>El rol de GitHub Actions (OIDC) → permisos de CloudFormation + S3 + Lambda para deployar</li>
+        <li>Ningún acceso hardcodeado — todo se maneja con AssumeRole en tiempo de ejecución</li>
+      </ul>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🔑 Autenticación con JWT <span class="part-min">2 min</span></div>
+      <ul>
+        <li><strong>Register:</strong> hashea contraseña con bcrypt → guarda en <code>chirp-users</code></li>
+        <li><strong>Login:</strong> verifica hash → genera JWT firmado con secret → devuelve token</li>
+        <li><strong>Cada Lambda protegida</strong> verifica el JWT en el header <code>Authorization: Bearer</code></li>
+        <li>El <code>userId</code> se extrae del token — el cliente nunca envía su ID directamente</li>
+      </ul>
+    </div>
+
+    <div class="relay">
+      <div class="relay-title">🎤 PASE A JORGE</div>
+      <em>"Tenemos la base de datos y la seguridad. Ahora Jorge nos explica cómo todo esto cobra vida — cómo Smithy define el contrato de la API y qué pasa internamente cuando un usuario hace algo en Chirp."</em>
+    </div>
+  </section>
+
+  <!-- ══ JORGE ══════════════════════════════════════════════════════ -->
+  <section id="jorge" class="section">
+    <div class="section-header">
+      <div class="section-num jorge">4</div>
+      <div>
+        <h2>Jorge — Funcionamiento y Smithy</h2>
+        <span class="presenter">El corazón técnico del proyecto — la sección más detallada</span>
+      </div>
+      <span class="time-badge">⏱ ~10 min</span>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🧩 ¿Qué es Smithy y por qué lo usamos? <span class="part-min">2 min</span></div>
+      <div class="quote"><strong>Frase de apertura:</strong> "Antes de ver cómo funciona el sistema, necesito explicar la pieza que todo lo conecta: Smithy."</div>
+      <ul>
+        <li><strong>Smithy</strong> es un lenguaje de definición de APIs creado por AWS — similar a OpenAPI</li>
+        <li>Es la <strong>fuente de verdad</strong> del proyecto: si un endpoint existe, primero existe en Smithy</li>
+        <li>Lo que definimos en Smithy se <strong>genera automáticamente</strong> en TypeScript, Java, Python, etc.</li>
+        <li>No es documentación — es <strong>código ejecutable</strong> que se usa en producción</li>
+      </ul>
+      <div class="demo-box">
+        <div class="demo-title">🖥️ Mostrar en pantalla: <code>smithy/model/chirps.smithy</code></div>
+        <ol>
+          <li>Apuntar a la estructura <code>operation CreateChirp</code></li>
+          <li>Mostrar el bloque <code>input</code> con los campos tipados</li>
+          <li>Mostrar el bloque <code>output</code> con el response esperado</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="part-title">📊 Las 23 operaciones del sistema <span class="part-min">2 min</span></div>
+      <table>
+        <tr><th>Grupo</th><th>Operaciones</th></tr>
+        <tr><td>🔐 Auth (3)</td><td>Register, Login, Logout</td></tr>
+        <tr><td>🐦 Chirps (9)</td><td>CreateChirp, GetChirp, DeleteChirp, HideChirp, LikeChirp, UnlikeChirp, GetChirpLikes, GetTimeline, GetUserChirps</td></tr>
+        <tr><td>👤 Users (4)</td><td>GetUser, GetUserByUsername, UpdateUserProfile, GetUserLikes</td></tr>
+        <tr><td>💬 Comments (3)</td><td>CreateComment, DeleteComment, GetChirpComments</td></tr>
+        <tr><td>🤝 Social (4)</td><td>FollowUser, UnfollowUser, GetFollowers, GetFollowing</td></tr>
+      </table>
+      <div class="demo-box">
+        <div class="demo-title">🖥️ Mostrar en pantalla: <code>smithy/model/main.smithy</code></div>
+        <ol><li>El <code>service ChirpService</code> que lista las 23 operaciones</li></ol>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="part-title">⚡ Cómo Smithy genera código real <span class="part-min">2 min</span></div>
+      <pre><code>smithy/model/*.smithy
+      ↓  <span class="cm">./gradlew build</span>
+smithy/generated/source/typescript-client-codegen/src/models/models_0.ts
+      ↓  <span class="cm">import type { Chirp, User, Comment } en frontend/src/main.ts</span>
+frontend/src/main.ts  (TypeScript estricto)
+      ↓  <span class="cm">npm run build (esbuild)</span>
+frontend/dist/app.js  →  S3  →  CloudFront  →  usuario</code></pre>
+      <ul>
+        <li>Si cambio un campo en Smithy y no actualizo el frontend → <strong>el build falla</strong></li>
+        <li>Eso es <strong>type safety end-to-end</strong> — el CI detecta breaking changes antes de producción</li>
+      </ul>
+      <div class="demo-box">
+        <div class="demo-title">🖥️ Mostrar en pantalla (3 tabs)</div>
+        <ol>
+          <li><strong>Tab 1:</strong> <code>models_0.ts</code> generado — interface <code>Chirp</code> con campos tipados</li>
+          <li><strong>Tab 2:</strong> <code>frontend/src/main.ts</code> línea 10 — el <code>import type { Chirp, User }</code></li>
+          <li><strong>Tab 3:</strong> Resaltar: "TypeScript estricto. Si cambio el modelo, el compilador lo detecta."</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🔄 Flujo completo de una request <span class="part-min">3 min</span></div>
+      <div class="quote"><strong>Caso de uso:</strong> "El usuario escribe 'Hola mundo' y presiona Chirpear."</div>
+      <pre><code><span class="num">1.</span> Usuario → POST /chirps  (Header: Authorization: Bearer [JWT])
+<span class="num">2.</span> API Gateway → verifica ruta → invoca Lambda <span class="fn">createChirp</span>
+<span class="num">3.</span> Lambda <span class="fn">createChirp</span>:
+     → verifica JWT → extrae <span class="kw">userId</span>
+     → genera <span class="kw">chirpId</span> (UUID)
+     → PutItem en DynamoDB tabla <span class="str">chirp-chirps</span>
+     → retorna <span class="kw">{ chirpId }</span>
+<span class="num">4.</span> Frontend recibe <span class="kw">{ chirpId }</span>
+     → llama <span class="fn">loadTimeline()</span> → actualiza la UI</code></pre>
+      <div class="demo-box">
+        <div class="demo-title">🖥️ Demo en vivo — Crear un chirp</div>
+        <ol>
+          <li>Abrir la app de Chirp en el browser, logueado</li>
+          <li>Escribir un mensaje y presionar "Chirpear"</li>
+          <li>Mostrar que aparece en el timeline inmediatamente</li>
+          <li>Opcional: abrir DevTools → Network para mostrar la llamada al API Gateway</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="part-title">✨ Lo que hace especial a este sistema <span class="part-min">1 min</span></div>
+      <ul>
+        <li><strong>Type safety transversal:</strong> Smithy → TypeScript → compilación → CI. Un breaking change se detecta antes de producción</li>
+        <li><strong>Zero servers:</strong> cada Lambda vive ~50ms, cobra lo que usa, escala automáticamente</li>
+        <li><strong>Git como fuente de verdad:</strong> cada cambio pasa por PR → CI valida → CDK despliega. Nadie toca la consola AWS a mano</li>
+      </ul>
+    </div>
+
+    <div class="relay">
+      <div class="relay-title">🎤 PASE A MAURICIO</div>
+      <em>"Tenemos un sistema donde el código de la API, el frontend y la infraestructura están todos sincronizados y validados automáticamente. Pero ¿cómo garantizamos que funcione en cada push? De eso se encarga el pipeline — Mauricio."</em>
+    </div>
+  </section>
+
+
+
+  <!-- ══ MAURICIO ══════════════════════════════════════════════════ -->
+  <section id="mauricio" class="section">
+    <div class="section-header">
+      <div class="section-num mauricio">5</div>
+      <div>
+        <h2>Mauricio — Pipelines CI/CD y Conclusiones</h2>
+        <span class="presenter">Automatización, calidad y cierre del video</span>
+      </div>
+      <span class="time-badge">⏱ ~7 min</span>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🔁 Pipeline CI — <code>ci_validate.yaml</code> <span class="part-min">2 min</span></div>
+      <ul>
+        <li><strong>Trigger:</strong> cualquier push o Pull Request a <code>main</code></li>
+        <li><strong>Job 1 — smithy-validation:</strong> corre <code>./gradlew clean build</code>, valida los modelos Smithy</li>
+        <li><strong>Job 2 — frontend-typecheck:</strong> necesita Job 1 → instala deps → <code>tsc --noEmit</code></li>
+        <li><strong>Job 3 — infrastructure-build-test:</strong> necesita Job 1 → <code>npm test</code> con cobertura → <code>cdk synthesize</code></li>
+        <li><strong>Job 4 — documentation-check:</strong> verifica que los archivos HTML de docs sean válidos</li>
+      </ul>
+      <pre><code>smithy-validation
+      ├── frontend-typecheck
+      └── infrastructure-build-test
+documentation-check  <span class="cm">(independiente)</span></code></pre>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🚀 Pipeline CD — <code>cd_deploy.yaml</code> <span class="part-min">2 min</span></div>
+      <ul>
+        <li><strong>Trigger:</strong> solo en push a <code>main</code> (no en PRs)</li>
+        <li>Asume rol IAM en AWS usando <strong>OIDC</strong> — sin credenciales hardcodeadas en secrets</li>
+        <li>Genera código Smithy → instala deps → <code>cdk deploy --require-approval never</code></li>
+        <li>CDK detecta cambios incrementales — solo actualiza lo que cambió</li>
+        <li>Si <code>frontend/dist/</code> no existe, el CDK construct lo construye automáticamente</li>
+      </ul>
+      <div class="demo-box">
+        <div class="demo-title">🖥️ Mostrar en pantalla: GitHub Actions</div>
+        <ol>
+          <li>Abrir un run exitoso del pipeline en GitHub</li>
+          <li>Mostrar los 4 jobs del CI en verde</li>
+          <li>Mostrar el CD con el paso de <code>cdk deploy</code> completado</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="part-title">📈 Recomendaciones técnicas <span class="part-min">2 min</span></div>
+      <ul>
+        <li><strong>Usar OIDC en lugar de access keys:</strong> credenciales AWS generadas por request, no almacenadas en secrets</li>
+        <li><strong>CDK self-building constructs:</strong> la infraestructura sabe cómo construir sus assets — menos dependencias entre pasos</li>
+        <li><strong>Smithy como contrato compartido:</strong> cualquier equipo genera su cliente en el lenguaje que prefiera</li>
+        <li><strong>Separar CI de CD:</strong> validar en cada PR y desplegar solo en merge — evita deployar código roto</li>
+        <li><strong>Git Submodules para multi-repo:</strong> cada equipo trabaja en su repo con historial independiente</li>
+      </ul>
+    </div>
+
+    <div class="part">
+      <div class="part-title">🏁 Conclusiones y cierre <span class="part-min">1 min</span></div>
+      <ul>
+        <li>Chirp demuestra que es posible construir una <strong>plataforma social completa y escalable</strong> con servicios AWS administrados</li>
+        <li>El stack (Smithy + CDK + Lambda + DynamoDB) permite <strong>iterar rápido</strong> sin preocuparse por servidores</li>
+        <li>La inversión en <strong>type safety y CI/CD</strong> desde el día uno paga dividendos: errores detectados antes de producción</li>
+        <li>Todo el código e infraestructura están en GitHub — <strong>reproducible desde cero</strong> con un <code>git clone</code></li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <p>Chirp · Proyecto Serverless en AWS · Presentación Video &nbsp;·&nbsp; 5 presentadores · ~36 min</p>
+  <p style="margin-top:6px;">Moisés · Javier · José Luis · Jorge · Mauricio</p>
+</footer>
+
+</body>
+</html>
