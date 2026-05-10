@@ -6,6 +6,8 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import * as path from 'path';
+import * as fs from 'fs';
+import { execSync } from 'child_process';
 
 export interface ChirpFrontendProps {
   /** URL del API Gateway — se inyecta en runtime-config.js durante el deploy */
@@ -27,6 +29,17 @@ export class ChirpFrontend extends Construct {
 
   constructor(scope: Construct, id: string, props: ChirpFrontendProps) {
     super(scope, id);
+
+    // ── BUILD FRONTEND SI dist/ NO EXISTE ────────────────────────────────────
+    // Garantiza que frontend/dist/ siempre esté disponible al sintetizar el stack,
+    // independientemente del orden de los pasos en el workflow de CI/CD.
+    const frontendDir = path.join(__dirname, '../../../frontend');
+    const distDir = path.join(frontendDir, 'dist');
+    if (!fs.existsSync(distDir)) {
+      console.log('📦 frontend/dist/ no encontrado — ejecutando npm run build...');
+      execSync('npm ci && npm run build', { cwd: frontendDir, stdio: 'inherit' });
+      console.log('✅ frontend/dist/ generado');
+    }
 
     // ── S3 BUCKET (privado, sólo accesible vía CloudFront OAC) ──────────────
     this.bucket = new s3.Bucket(this, 'Bucket', {

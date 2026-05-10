@@ -56,12 +56,6 @@ jobs:
       - name: Compilar TypeScript (infraestructura)
         run: npm run build
 
-      - name: Compilar frontend (esbuild)
-        run: |
-          cd "$GITHUB_WORKSPACE/frontend"
-          npm ci
-          npm run build
-
       - name: Sintetizar stack CDK
         run: npx cdk synthesize
 
