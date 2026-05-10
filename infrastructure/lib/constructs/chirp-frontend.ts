@@ -55,7 +55,7 @@ export class ChirpFrontend extends Construct {
     // Excluye runtime-config.js (se escribe por separado con la URL real)
     new s3deploy.BucketDeployment(this, 'DeployFiles', {
       sources: [
-        s3deploy.Source.asset(path.join(__dirname, '../../../frontend'), {
+        s3deploy.Source.asset(path.join(__dirname, '../../../frontend/dist'), {
           exclude: ['runtime-config.js'],
         }),
       ],

@@ -58,12 +58,12 @@ const configContent = [
   '',
 ].join('\n');
 
-const configPath = join(repoRoot, 'frontend', 'runtime-config.js');
+const configPath = join(repoRoot, 'frontend', 'dist', 'runtime-config.js');
 writeFileSync(configPath, configContent, 'utf-8');
 console.log('✅  runtime-config.js generado →', apiUrl);
 
 // ── 3. Subir frontend a S3 ────────────────────────────────────────────────────
-const frontendDir = join(repoRoot, 'frontend');
+const frontendDir = join(repoRoot, 'frontend', 'dist');
 console.log(`\n📦  Subiendo frontend a s3://${bucketName}/ ...`);
 execSync(
   `aws s3 sync "${frontendDir}" s3://${bucketName}/ --delete`,
