@@ -72,13 +72,13 @@ jobs:
       - name: Ejecutar pruebas CDK con cobertura
         run: npm test -- --coverage
 
-      - name: Instalar dependencias (frontend)
-        working-directory: ${{ github.workspace }}/frontend
-        run: npm ci
-
-      - name: Compilar frontend (esbuild)
-        working-directory: ${{ github.workspace }}/frontend
-        run: npm run build
+      - name: Compilar frontend para CDK
+        run: |
+          cd "$GITHUB_WORKSPACE/frontend"
+          npm ci
+          npm run build
+          echo "✅ dist/ generado:"
+          ls dist/
 
       - name: Validar sintesis del stack CDK
         run: npx cdk synthesize

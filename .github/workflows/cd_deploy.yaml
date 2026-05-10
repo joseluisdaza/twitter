@@ -56,13 +56,11 @@ jobs:
       - name: Compilar TypeScript (infraestructura)
         run: npm run build
 
-      - name: Instalar dependencias (frontend)
-        working-directory: ${{ github.workspace }}/frontend
-        run: npm ci
-
       - name: Compilar frontend (esbuild)
-        working-directory: ${{ github.workspace }}/frontend
-        run: npm run build
+        run: |
+          cd "$GITHUB_WORKSPACE/frontend"
+          npm ci
+          npm run build
 
       - name: Sintetizar stack CDK
         run: npx cdk synthesize
