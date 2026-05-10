@@ -34,7 +34,7 @@ export class InfrastructureStack extends cdk.Stack {
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // On-demand, ideal para desarrollo
       removalPolicy: RemovalPolicy.DESTROY, // CUIDADO: En producción usar RETAIN
-      pointInTimeRecovery: true, // Backups automáticos
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true }, // Backups automáticos
       encryption: dynamodb.TableEncryption.AWS_MANAGED, // Encriptación en reposo
     });
 
@@ -74,7 +74,7 @@ export class InfrastructureStack extends cdk.Stack {
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY, // CUIDADO: En producción usar RETAIN
-      pointInTimeRecovery: true,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
       // Time to Live: opcional, para eliminar chirps viejos automáticamente
       // timeToLiveAttribute: 'ttl', // Descomentar si quieres auto-eliminación
@@ -116,7 +116,7 @@ export class InfrastructureStack extends cdk.Stack {
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY,
-      pointInTimeRecovery: true,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
     });
 
@@ -155,7 +155,7 @@ export class InfrastructureStack extends cdk.Stack {
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY,
-      pointInTimeRecovery: true,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
     });
 
@@ -188,7 +188,7 @@ export class InfrastructureStack extends cdk.Stack {
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY,
-      pointInTimeRecovery: true,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
     });
 

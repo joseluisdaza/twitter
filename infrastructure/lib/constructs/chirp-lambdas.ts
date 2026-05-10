@@ -38,15 +38,14 @@ export class ChirpLambdas extends Construct {
     };
 
     const bundling = {
-      // nodeModules: packages outside infrastructure/ that esbuild cannot resolve
-      // CDK will mark them as external AND install them in the Lambda bundle
-      nodeModules: ['@aws-smithy/server-common', '@smithy/smithy-client'],
-      tsconfig: path.join(__dirname, '../../tsconfig.json'),
-      commandHooks: {
-        beforeBundling: () => [],
-        beforeInstall: () => [],
-        afterBundling: () => [],
+      // NODE_PATH tells esbuild where to look for packages imported from outside
+      // this directory (e.g. smithy generated code that imports @aws-smithy/server-common).
+      // This lets esbuild bundle them directly without running `npm install` per Lambda.
+      // Note: @smithy/* is already in the Lambda runtime so CDK marks it --external automatically.
+      environment: {
+        NODE_PATH: path.join(__dirname, '../../node_modules'),
       },
+      tsconfig: path.join(__dirname, '../../tsconfig.json'),
     };
 
     const def = (name: string, entryRelPath: string) => {
