@@ -33,10 +33,10 @@ jobs:
       working-directory: ./smithy
       run: ./gradlew clean build
 
-    - name: Configurar Node.js 20
+    - name: Configurar Node.js 24
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'npm'
         cache-dependency-path: './infrastructure/package-lock.json'
 
@@ -135,10 +135,10 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Configurar Node.js 20
+    - name: Configurar Node.js 24
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'npm'
         cache-dependency-path: './infrastructure/package-lock.json'
 
@@ -207,10 +207,10 @@ jobs:
       working-directory: ./smithy
       run: ./gradlew clean build
 
-    - name: Configurar Node.js 20
+    - name: Configurar Node.js 24
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'npm'
         cache-dependency-path: './infrastructure/package-lock.json'
 
