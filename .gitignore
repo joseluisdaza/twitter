@@ -38,3 +38,8 @@ smithy/gradle/wrapper/gradle-wrapper.jar
 # Cliente: smithy/generated/source/typescript-client-codegen/
 # Servidor: smithy/generated/source/typescript-server-codegen/
 smithy/generated/
+
+# ──────────────────────────────────────────────
+# Documentos locales (no para el repositorio)
+# ──────────────────────────────────────────────
+docs/04_PLAN_PRESENTACION_VIDEO.html
