@@ -73,11 +73,11 @@ jobs:
         run: npm test -- --coverage
 
       - name: Instalar dependencias (frontend)
-        working-directory: ./frontend
+        working-directory: ${{ github.workspace }}/frontend
         run: npm ci
 
       - name: Compilar frontend (esbuild)
-        working-directory: ./frontend
+        working-directory: ${{ github.workspace }}/frontend
         run: npm run build
 
       - name: Validar sintesis del stack CDK

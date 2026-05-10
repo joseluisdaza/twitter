@@ -57,11 +57,11 @@ jobs:
         run: npm run build
 
       - name: Instalar dependencias (frontend)
-        working-directory: ./frontend
+        working-directory: ${{ github.workspace }}/frontend
         run: npm ci
 
       - name: Compilar frontend (esbuild)
-        working-directory: ./frontend
+        working-directory: ${{ github.workspace }}/frontend
         run: npm run build
 
       - name: Sintetizar stack CDK
