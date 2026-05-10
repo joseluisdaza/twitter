@@ -72,6 +72,14 @@ jobs:
       - name: Ejecutar pruebas CDK con cobertura
         run: npm test -- --coverage
 
+      - name: Instalar dependencias (frontend)
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Compilar frontend (esbuild)
+        working-directory: ./frontend
+        run: npm run build
+
       - name: Validar sintesis del stack CDK
         run: npx cdk synthesize
 
