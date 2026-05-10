@@ -1,0 +1,60 @@
+{
+  "name": "Chirp - Dev Environment",
+
+  // Imagen base oficial de Node 24 con herramientas de desarrollo incluidas
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:24-bookworm",
+
+  // Features adicionales: Java 21 (Temurin) para Smithy/Gradle
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "jdkDistro": "tem"
+    }
+  },
+
+  // Instala AWS CDK, configura git con las variables del .env e instala dependencias
+  "postCreateCommand": "npm install -g aws-cdk && git config --global user.name \"${GIT_USER_NAME}\" && git config --global user.email \"${GIT_USER_EMAIL}\" && git config --global credential.helper store && echo \"https://${GITHUB_TOKEN}:x-oauth-basic@github.com\" > ~/.git-credentials && cd infrastructure && npm ci",
+
+  // Lee las credenciales AWS desde el archivo .env en la raiz del proyecto
+  // Copia .env.example a .env y rellena tus valores reales (nunca commitear .env)
+  "runArgs": ["--env-file", "${localWorkspaceFolder}/.env"],
+
+  // Extensiones de VS Code utiles para el proyecto
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "ms-vscode.vscode-typescript-next",
+        "amazonwebservices.aws-toolkit-vscode",
+        "redhat.java",
+        "vscjava.vscode-gradle",
+        "disneystreaming.smithy",
+        "vscode-icons-team.vscode-icons",
+        "augment.vscode-augment"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "java.jdt.ls.java.home": "/usr/local/sdkman/candidates/java/current",
+        "editor.fontSize": 18,
+        "editor.lineHeight": 1.8,
+        "editor.tabSize": 2,
+        "editor.cursorBlinking": "smooth",
+        "editor.cursorSmoothCaretAnimation": "on",
+        "explorer.compactFolders": false,
+        "terminal.integrated.fontSize": 16,
+        "workbench.iconTheme": "vscode-icons",
+        "vsicons.dontShowNewVersionMessage": true,
+        "github.copilot.enable": {
+          "*": false
+        },
+        "augment.completions.enableAutomaticCompletions": false
+      }
+    }
+  },
+
+  // Monta el socket de Docker del host (opcional, por si usas Docker dentro del contenedor)
+  "mounts": [],
+
+  // Puerto del servidor local de frontend (npx serve)
+  "forwardPorts": [3000]
+}
