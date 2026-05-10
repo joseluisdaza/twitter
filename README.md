@@ -776,12 +776,4 @@ For questions or issues:
 2. Review existing [Issues](../../issues)
 3. Open a new issue with detailed description
 
----
 
-## ⭐ Star History
-
-If you find this project useful, please consider giving it a star! ⭐
-
----
-
-**Built with ❤️ using AWS Serverless Technologies**
