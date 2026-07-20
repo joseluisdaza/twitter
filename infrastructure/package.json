@@ -25,6 +25,7 @@
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.1034.0",
     "@aws-sdk/client-dynamodb": "^3.1024.0",
+    "@aws-sdk/client-lambda": "^3.1090.0",
     "@aws-sdk/lib-dynamodb": "^3.1024.0",
     "@aws-smithy/server-common": "^1.0.0-alpha.10",
     "@smithy/smithy-client": "^4.12.12",

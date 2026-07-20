@@ -1,9 +1,10 @@
 import { Duration } from 'aws-cdk-lib';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
+import { execSync } from 'child_process';
 import * as path from 'path';
 
 export interface ChirpLambdasProps {
@@ -26,6 +27,82 @@ export class ChirpLambdas extends Construct {
 
     const handlersDir = path.join(__dirname, '../../lambda/handlers');
     const smithyRoot = path.join(__dirname, '../../../smithy/generated/source/typescript-server-codegen');
+    const moderationHandlerDir = path.join(handlersDir, 'moderation');
+
+    const moderateToxicity = new Function(this, 'moderateToxicity', {
+      runtime: Runtime.PYTHON_3_11,
+      handler: 'predict.handler',
+      timeout: Duration.seconds(10),
+      memorySize: 1024,
+      environment: {
+        TOXICITY_MODEL_PATH: 'model/toxicity_model.pkl',
+        TOXICITY_THRESHOLD: '0.5',
+      },
+      code: Code.fromAsset(moderationHandlerDir, {
+        bundling: {
+          local: {
+            tryBundle(outputDir: string): boolean {
+              try {
+                execSync(`pip3 install -r requirements.txt -t "${outputDir}"`, {
+                  cwd: moderationHandlerDir,
+                  stdio: 'inherit',
+                });
+                execSync(`cp predict.py "${outputDir}/predict.py"`, {
+                  cwd: moderationHandlerDir,
+                  stdio: 'inherit',
+                });
+                execSync(`mkdir -p "${outputDir}/model"`, {
+                  cwd: moderationHandlerDir,
+                  stdio: 'inherit',
+                });
+                execSync(`cp model/toxicity_model.pkl "${outputDir}/model/toxicity_model.pkl"`, {
+                  cwd: moderationHandlerDir,
+                  stdio: 'inherit',
+                });
+                execSync(
+                  `find "${outputDir}" -type d \\( -name tests -o -name test -o -name __pycache__ -o -name benchmarks -o -name docs \\) -prune -exec rm -rf {} +`,
+                  {
+                    cwd: moderationHandlerDir,
+                    stdio: 'inherit',
+                  }
+                );
+                execSync(`find "${outputDir}" -type f \\( -name "*.pyc" -o -name "*.pyo" \\) -delete`, {
+                  cwd: moderationHandlerDir,
+                  stdio: 'inherit',
+                });
+                execSync(`find "${outputDir}" -maxdepth 1 -type d -name "*.dist-info" -prune -exec rm -rf {} +`, {
+                  cwd: moderationHandlerDir,
+                  stdio: 'inherit',
+                });
+                execSync(`rm -rf "${outputDir}/bin"`, {
+                  cwd: moderationHandlerDir,
+                  stdio: 'inherit',
+                });
+                return true;
+              } catch (error) {
+                console.error('Local Python bundling failed:', error);
+                return false;
+              }
+            },
+          },
+          image: Runtime.PYTHON_3_11.bundlingImage,
+          command: [
+            'bash',
+            '-lc',
+            [
+              'pip install -r requirements.txt -t /asset-output',
+              'cp predict.py /asset-output/predict.py',
+              'mkdir -p /asset-output/model',
+              'cp model/toxicity_model.pkl /asset-output/model/toxicity_model.pkl',
+              'find /asset-output -type d \\( -name tests -o -name test -o -name __pycache__ -o -name benchmarks -o -name docs \\) -prune -exec rm -rf {} +',
+              'find /asset-output -type f \\( -name "*.pyc" -o -name "*.pyo" \\) -delete',
+              'find /asset-output -maxdepth 1 -type d -name "*.dist-info" -prune -exec rm -rf {} +',
+              'rm -rf /asset-output/bin',
+            ].join(' && '),
+          ],
+        },
+      }),
+    });
 
     const env = {
       USERS_TABLE: usersTable.tableName,
@@ -35,6 +112,7 @@ export class ChirpLambdas extends Construct {
       COMMENTS_TABLE: commentsTable.tableName,
       COGNITO_USER_POOL_ID: userPool.userPoolId,
       COGNITO_CLIENT_ID: userPoolClient.userPoolClientId,
+      TOXICITY_LAMBDA_NAME: moderateToxicity.functionName,
     };
 
     const bundling = {
@@ -58,7 +136,6 @@ export class ChirpLambdas extends Construct {
 
     const def = (name: string, entryRelPath: string) => {
       const fn = new NodejsFunction(this, name, {
-        functionName: `chirp-${name}`,
         runtime: Runtime.NODEJS_22_X,
         entry: path.join(handlersDir, entryRelPath),
         handler: 'handler',
@@ -103,6 +180,9 @@ export class ChirpLambdas extends Construct {
     const createComment    = def('createComment',    'comments/createComment.ts');
     const getChirpComments = def('getChirpComments', 'comments/getChirpComments.ts');
     const deleteComment    = def('deleteComment',    'comments/deleteComment.ts');
+
+    moderateToxicity.grantInvoke(createChirp);
+    moderateToxicity.grantInvoke(createComment);
 
     // Permisos Cognito
     userPool.grant(register, 'cognito-idp:AdminConfirmSignUp');

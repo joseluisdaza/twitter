@@ -3,6 +3,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { CreateCommentInput } from '../../../../smithy/generated/source/typescript-server-codegen/src/models/models_0';
 import { badRequest, created, getRequestUserId, internalError, parseBody, unauthorized } from '../../shared/response';
+import { detectToxicity } from '../../shared/toxicity';
 import { randomUUID } from 'crypto';
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -27,8 +28,19 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
 
     const commentId = randomUUID();
     const now = new Date().toISOString();
+    const content = input.content ?? '';
+    const moderation = await detectToxicity(content);
 
-    const item = { commentId, chirpId, userId, content: input.content, createdAt: now, updatedAt: now };
+    const item = {
+      commentId,
+      chirpId,
+      userId,
+      content,
+      isToxic: moderation?.isToxic ?? false,
+      toxicityScore: moderation?.toxicityScore ?? null,
+      createdAt: now,
+      updatedAt: now,
+    };
 
     await ddb.send(new PutCommand({ TableName: COMMENTS_TABLE, Item: item }));
     await ddb.send(new UpdateCommand({

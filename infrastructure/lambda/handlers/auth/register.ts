@@ -60,6 +60,8 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
   } catch (err: unknown) {
     const error = err as { name?: string; message?: string };
     if (error.name === 'UsernameExistsException') return badRequest('Email already registered');
+    if (error.name === 'InvalidPasswordException') return badRequest('Password must include uppercase, lowercase, number, and special character');
+    if (error.name === 'InvalidParameterException') return badRequest(error.message ?? 'Invalid registration data');
     console.error('Register error:', error);
     return internalError();
   }
