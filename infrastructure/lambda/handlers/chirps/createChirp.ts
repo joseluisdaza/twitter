@@ -3,6 +3,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { CreateChirpInput } from '../../../../smithy/generated/source/typescript-server-codegen/src/models/models_0';
 import { badRequest, created, getRequestUserId, internalError, parseBody, unauthorized } from '../../shared/response';
+import { detectToxicity } from '../../shared/toxicity';
 import { randomUUID } from 'crypto';
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -21,15 +22,20 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
 
     const chirpId = randomUUID();
     const now = new Date().toISOString();
+    const content = input.content ?? '';
+    const moderation = await detectToxicity(content);
+    const isToxic = moderation?.isToxic ?? false;
 
     const item = {
       chirpId,
       userId,
-      content: input.content,
+      content,
       mediaUrls: input.mediaUrls ?? [],
       likesCount: 0,
       commentsCount: 0,
-      isHidden: false,
+      isHidden: isToxic,
+      isToxic,
+      toxicityScore: moderation?.toxicityScore ?? null,
       createdAt: now,
       updatedAt: now,
     };
